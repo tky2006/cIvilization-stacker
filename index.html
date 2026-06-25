@@ -1,903 +1,255 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Civilization Stacker</title>
-<style>
-/* ====== RESET & BASE ====== */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --parchment: #f5e6c8;
-  --parchment-dark: #e8d5a3;
-  --stone: #8b7355;
-  --stone-light: #b8a88a;
-  --stone-dark: #5c4a2a;
-  --ink: #2c1a0e;
-  --ink-light: #5a3e28;
-  --gold: #c9922a;
-  --gold-bright: #f0b800;
-  --ember: #c0392b;
-  --sky: #2980b9;
-  --leaf: #27ae60;
-  --shadow: rgba(44,26,14,0.35);
-  --card-w: clamp(100px, 18vw, 150px);
-  --card-h: clamp(110px, 20vw, 165px);
-  --font-display: 'Georgia', 'Times New Roman', serif;
-  --font-body: 'Palatino Linotype', 'Palatino', Georgia, serif;
-  --font-ui: 'Segoe UI', system-ui, sans-serif;
-}
-html, body {
-  height: 100%;
-  overflow: hidden;
-  background: #1a1008;
-  font-family: var(--font-body);
-  color: var(--ink);
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-}
-body { display: flex; flex-direction: column; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Civilization Stacker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --parchment: #f5e6c8;
+      --parchment-dark: #e8d5a3;
+      --stone: #8b7355;
+      --stone-light: #b8a88a;
+      --stone-dark: #5c4a2a;
+      --ink: #2c1a0e;
+      --gold: #c9922a;
+      --gold-bright: #f0b800;
+      --ember: #c0392b;
+      --leaf: #27ae60;
+      --card-w: clamp(100px, 18vw, 150px);
+      --card-h: clamp(110px, 20vw, 165px);
+      --font-display: 'Georgia', 'Times New Roman', serif;
+      --font-body: 'Palatino Linotype', 'Palatino', Georgia, serif;
+    }
+    html, body { height: 100%; overflow: hidden; background: #1a1008; font-family: var(--font-body); color: var(--ink); user-select: none; touch-action: manipulation; }
+    body { display: flex; flex-direction: column; }
+    .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; overflow-y: auto; padding: 16px; }
+    .screen.active { opacity: 1; pointer-events: all; }
+    .parchment-bg { background: radial-gradient(ellipse at 20% 20%, rgba(200,160,80,0.18) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(160,100,40,0.15) 0%, transparent 60%), linear-gradient(160deg, #f5e6c8 0%, #e8d4a0 40%, #d4ba7a 100%); background-attachment: fixed; }
+    .stone-bg { background: radial-gradient(ellipse at 50% 0%, rgba(139,115,85,0.3) 0%, transparent 70%), linear-gradient(180deg, #2c1a0e 0%, #1a0f06 100%); }
 
-/* ====== SCREENS ====== */
-.screen {
-  position: fixed; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.5s ease;
-  overflow-y: auto;
-}
-.screen.active { opacity: 1; pointer-events: all; }
+    /* START */
+    #startScreen { background: radial-gradient(ellipse at 50% 30%, rgba(201,146,42,0.25) 0%, transparent 60%), linear-gradient(160deg, #1a0f06 0%, #2c1a0e 50%, #1a0f06 100%); text-align: center; }
+    .start-emblem { width: clamp(80px, 16vw, 140px); height: clamp(80px, 16vw, 140px); margin: 0 auto 16px; background: radial-gradient(circle, #f0b800 0%, #c9922a 50%, #8b5e1a 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: clamp(36px, 7vw, 64px); box-shadow: 0 0 40px rgba(240,184,0,0.4), 0 0 80px rgba(240,184,0,0.2); animation: pulseGold 3s ease-in-out infinite; }
+    @keyframes pulseGold { 0%,100% { box-shadow: 0 0 40px rgba(240,184,0,0.4), 0 0 80px rgba(240,184,0,0.2); } 50% { box-shadow: 0 0 60px rgba(240,184,0,0.7), 0 0 120px rgba(240,184,0,0.35); } }
+    .start-title { font-family: var(--font-display); font-size: clamp(28px, 6vw, 60px); color: var(--gold-bright); text-shadow: 0 0 30px rgba(240,184,0,0.5), 2px 2px 0 var(--stone-dark); letter-spacing: 2px; line-height: 1.1; margin-bottom: 8px; }
+    .start-subtitle { font-size: clamp(12px, 2.5vw, 18px); color: var(--stone-light); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 28px; }
+    .start-desc { max-width: 480px; color: var(--parchment-dark); font-size: clamp(13px, 2.2vw, 16px); line-height: 1.6; margin: 0 auto 32px; }
+    .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .btn { padding: clamp(10px,2vw,14px) clamp(20px,4vw,36px); font-family: var(--font-display); font-size: clamp(13px,2.5vw,17px); border: none; border-radius: 6px; cursor: pointer; transition: all 0.18s; letter-spacing: 1px; font-weight: bold; min-height: 48px; }
+    .btn-primary { background: linear-gradient(135deg, #f0b800, #c9922a); color: var(--ink); box-shadow: 0 4px 20px rgba(201,146,42,0.4), inset 0 1px 0 rgba(255,255,255,0.3); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(201,146,42,0.5); }
+    .btn-secondary { background: transparent; color: var(--parchment); border: 2px solid var(--stone); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    .btn-secondary:hover { background: rgba(139,115,85,0.3); transform: translateY(-1px); }
 
-/* ====== PARCHMENT BACKGROUND ====== */
-.parchment-bg {
-  background:
-    radial-gradient(ellipse at 20% 20%, rgba(200,160,80,0.18) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 80%, rgba(160,100,40,0.15) 0%, transparent 60%),
-    linear-gradient(160deg, #f5e6c8 0%, #e8d4a0 40%, #d4ba7a 100%);
-  background-attachment: fixed;
-}
-.stone-bg {
-  background:
-    radial-gradient(ellipse at 50% 0%, rgba(139,115,85,0.3) 0%, transparent 70%),
-    linear-gradient(180deg, #2c1a0e 0%, #1a0f06 100%);
-}
+    /* INSTRUCTIONS – visual tabs with icons */
+    #instructScreen { background: linear-gradient(160deg, #1a0f06 0%, #2c1a0e 100%); align-items: flex-start; justify-content: flex-start; padding: 16px; }
+    .instruct-inner { max-width: 820px; width: 100%; margin: 0 auto; }
+    .instruct-title { font-family: var(--font-display); font-size: clamp(20px,4vw,36px); color: var(--gold-bright); text-align: center; margin-bottom: 16px; text-shadow: 0 0 20px rgba(240,184,0,0.3); }
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
+    .tab-btn { background: rgba(245,230,200,0.08); border: 1px solid rgba(201,146,42,0.3); color: var(--stone-light); padding: 6px 14px; border-radius: 30px; font-size: clamp(13px,2vw,16px); cursor: pointer; transition: all 0.2s; font-family: var(--font-body); display: flex; align-items: center; gap: 6px; }
+    .tab-btn.active { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+    .tab-content { display: none; background: rgba(245,230,200,0.05); border: 1px solid rgba(201,146,42,0.2); border-radius: 12px; padding: 16px 18px; margin-top: 8px; color: var(--parchment-dark); font-size: clamp(12px,2vw,14px); line-height: 1.6; }
+    .tab-content.active { display: block; }
+    .tab-content h3 { color: var(--gold); font-family: var(--font-display); margin-bottom: 10px; border-bottom: 1px solid rgba(201,146,42,0.2); padding-bottom: 6px; }
+    .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: 12px; margin: 12px 0; }
+    .icon-item { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 12px 8px; text-align: center; border: 1px solid rgba(201,146,42,0.15); }
+    .icon-item .big-icon { font-size: 32px; display: block; margin-bottom: 4px; }
+    .icon-item .label { font-size: 11px; color: var(--stone-light); }
+    .kbd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 6px; margin-top: 8px; }
+    .kbd-item { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.15); padding: 4px 10px; border-radius: 6px; }
+    .kbd-key { background: linear-gradient(180deg, #4a3520, #2c1a0e); color: var(--gold-bright); border: 1px solid var(--stone); border-radius: 4px; padding: 2px 10px; font-size: 11px; font-family: sans-serif; white-space: nowrap; box-shadow: 0 2px 0 #1a0f06; }
+    .timeline-visual { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 10px 0; }
+    .tl-era { background: rgba(0,0,0,0.25); border-radius: 30px; padding: 6px 16px; border-left: 4px solid var(--gold); display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--parchment); }
+    .tl-era .emoji { font-size: 20px; }
+    .instruct-back-btn { margin-top: 18px; text-align: center; }
 
-/* ======== START SCREEN ======== */
-#startScreen {
-  background:
-    radial-gradient(ellipse at 50% 30%, rgba(201,146,42,0.25) 0%, transparent 60%),
-    linear-gradient(160deg, #1a0f06 0%, #2c1a0e 50%, #1a0f06 100%);
-  padding: 20px;
-  text-align: center;
-}
-.start-emblem {
-  width: clamp(80px, 16vw, 140px);
-  height: clamp(80px, 16vw, 140px);
-  margin: 0 auto 16px;
-  background: radial-gradient(circle, #f0b800 0%, #c9922a 50%, #8b5e1a 100%);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: clamp(36px, 7vw, 64px);
-  box-shadow: 0 0 40px rgba(240,184,0,0.4), 0 0 80px rgba(240,184,0,0.2);
-  animation: pulseGold 3s ease-in-out infinite;
-}
-@keyframes pulseGold {
-  0%,100% { box-shadow: 0 0 40px rgba(240,184,0,0.4), 0 0 80px rgba(240,184,0,0.2); }
-  50%      { box-shadow: 0 0 60px rgba(240,184,0,0.7), 0 0 120px rgba(240,184,0,0.35); }
-}
-.start-title {
-  font-family: var(--font-display);
-  font-size: clamp(28px, 6vw, 60px);
-  color: var(--gold-bright);
-  text-shadow: 0 0 30px rgba(240,184,0,0.5), 2px 2px 0 var(--stone-dark);
-  letter-spacing: 2px;
-  line-height: 1.1;
-  margin-bottom: 8px;
-}
-.start-subtitle {
-  font-size: clamp(12px, 2.5vw, 18px);
-  color: var(--stone-light);
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  margin-bottom: 28px;
-}
-.start-desc {
-  max-width: 480px;
-  color: var(--parchment-dark);
-  font-size: clamp(13px, 2.2vw, 16px);
-  line-height: 1.6;
-  margin: 0 auto 32px;
-}
-.btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-.btn {
-  padding: clamp(10px,2vw,14px) clamp(20px,4vw,36px);
-  font-family: var(--font-display);
-  font-size: clamp(13px,2.5vw,17px);
-  border: none; border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.18s;
-  letter-spacing: 1px;
-  font-weight: bold;
-  min-height: 48px;
-}
-.btn-primary {
-  background: linear-gradient(135deg, #f0b800, #c9922a);
-  color: var(--ink);
-  box-shadow: 0 4px 20px rgba(201,146,42,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
-}
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(201,146,42,0.5); }
-.btn-secondary {
-  background: transparent;
-  color: var(--parchment);
-  border: 2px solid var(--stone);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
-.btn-secondary:hover { background: rgba(139,115,85,0.3); transform: translateY(-1px); }
+    /* GAME */
+    #gameScreen { background: linear-gradient(160deg, #1a0f06 0%, #2c1a0e 70%, #1a0f06 100%); flex-direction: column; justify-content: flex-start; overflow: hidden; padding: 0; }
+    .hud { width: 100%; background: linear-gradient(180deg, rgba(10,5,2,0.95) 0%, rgba(20,10,4,0.9) 100%); border-bottom: 1px solid rgba(201,146,42,0.3); padding: clamp(6px,1.5vw,10px) clamp(10px,2vw,20px); display: flex; align-items: center; gap: clamp(8px,2vw,20px); flex-shrink: 0; z-index: 100; }
+    .hud-civ { flex: 1; min-width: 0; }
+    .hud-civ-name { font-family: var(--font-display); color: var(--gold-bright); font-size: clamp(11px,2.2vw,17px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hud-round { font-size: clamp(9px,1.5vw,12px); color: var(--stone-light); letter-spacing: 1px; }
+    .hud-right { display: flex; align-items: center; gap: clamp(8px,2vw,16px); flex-shrink: 0; }
+    .hud-score { display: flex; flex-direction: column; align-items: center; }
+    .hud-score-val { font-family: var(--font-display); font-size: clamp(14px,2.5vw,20px); color: var(--gold); line-height: 1; }
+    .hud-score-lbl { font-size: 9px; color: var(--stone-light); text-transform: uppercase; letter-spacing: 1px; }
+    .hud-lives { display: flex; gap: 3px; align-items: center; }
+    .life-icon { font-size: clamp(14px,2.5vw,20px); transition: all 0.3s; }
+    .life-icon.lost { filter: grayscale(1); opacity: 0.25; transform: scale(0.8); }
+    .timer-ring { width: clamp(36px,6vw,52px); height: clamp(36px,6vw,52px); flex-shrink: 0; }
+    .timer-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .timer-ring circle { fill: none; stroke: var(--stone-dark); stroke-width: 4; r: 18; cx: 22; cy: 22; }
+    .timer-ring .prog { stroke: var(--gold); stroke-dasharray: 113; stroke-dashoffset: 0; stroke-linecap: round; transition: stroke-dashoffset 0.9s linear, stroke 0.3s; }
+    .timer-ring .prog.urgent { stroke: var(--ember); }
+    .timer-num { position: absolute; font-size: clamp(10px,1.8vw,14px); font-weight: bold; color: var(--gold); }
+    .timer-wrap { position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .mute-btn { background: rgba(201,146,42,0.15); border: 1px solid rgba(201,146,42,0.3); color: var(--gold); border-radius: 6px; padding: 5px 8px; cursor: pointer; font-size: clamp(12px,2vw,16px); transition: background 0.2s; min-height: 36px; min-width: 36px; display: flex; align-items: center; justify-content: center; }
+    .mute-btn:hover { background: rgba(201,146,42,0.3); }
+    .game-area { flex: 1; display: flex; gap: clamp(6px,1.5vw,16px); padding: clamp(6px,1.5vw,14px); min-height: 0; overflow: hidden; align-items: center; justify-content: center; }
+    .card-pool { width: clamp(110px,20vw,165px); display: flex; flex-direction: column; gap: clamp(5px,1vw,10px); align-items: center; overflow-y: auto; flex-shrink: 0; padding-bottom: 10px; height: 100%; justify-content: center; }
+    .pool-label { font-family: var(--font-display); font-size: clamp(9px,1.5vw,12px); color: var(--stone-light); text-transform: uppercase; letter-spacing: 2px; text-align: center; padding-bottom: 6px; border-bottom: 1px solid rgba(139,115,85,0.3); width: 100%; }
+    .stack-area { flex: 0 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; position: relative; padding: 10px 0; min-height: 0; }
+    .stack-drop-zone { width: clamp(110px,22vw,170px); display: flex; flex-direction: column-reverse; gap: 3px; position: relative; flex-shrink: 0; }
+    .stack-slot { height: clamp(50px,9vw,75px); border: 2px dashed rgba(201,146,42,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: rgba(201,146,42,0.2); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.25s; position: relative; background: rgba(0,0,0,0.1); }
+    .stack-slot.drag-over { border-color: var(--gold-bright); background: rgba(240,184,0,0.1); box-shadow: 0 0 12px rgba(240,184,0,0.3); }
+    .stack-slot.filled { border-color: transparent; background: transparent; }
+    .stack-platform { width: clamp(130px,26vw,200px); height: 20px; background: linear-gradient(180deg, #8b7355, #5c4a2a); border-radius: 0 0 12px 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); margin: 0 auto; flex-shrink: 0; }
+    .progress-bar-wrap { width: 100%; max-width: 300px; margin-top: 10px; flex-shrink: 0; }
+    .progress-bar-label { font-size: 10px; color: var(--stone-light); text-align: center; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+    .progress-bar { height: 6px; background: rgba(139,115,85,0.3); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-bright)); border-radius: 3px; transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .info-panel { width: clamp(110px,20vw,180px); display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; overflow-y: auto; height: 100%; justify-content: center; }
+    .info-block { background: rgba(245,230,200,0.05); border: 1px solid rgba(201,146,42,0.2); border-radius: 8px; padding: 8px 10px; }
+    .info-block-title { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); margin-bottom: 6px; }
+    .kbd-hints { display: flex; flex-direction: column; gap: 3px; }
+    .kbd-hint { font-size: 10px; color: var(--stone-light); display: flex; gap: 6px; align-items: center; }
+    .kbd-hint-key { background: rgba(90,62,40,0.5); border: 1px solid var(--stone); border-radius: 3px; padding: 1px 5px; color: var(--gold); font-size: 9px; font-family: sans-serif; min-width: 22px; text-align: center; }
+    .order-pos { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+    .order-num { width: 16px; height: 16px; border-radius: 50%; background: var(--stone-dark); color: var(--stone-light); font-size: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .order-num.filled-ord { background: var(--gold); color: var(--ink); }
+    .order-card-mini { font-size: 10px; color: var(--parchment-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .toast { position: fixed; top: clamp(60px,10vw,90px); left: 50%; transform: translateX(-50%) translateY(-20px); background: rgba(10,5,2,0.92); border: 1px solid var(--gold); border-radius: 20px; padding: 6px 18px; color: var(--gold-bright); font-family: var(--font-display); font-size: clamp(11px,2vw,14px); letter-spacing: 1px; opacity: 0; transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1000; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 20px rgba(201,146,42,0.3); }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .card { width: var(--card-w); height: var(--card-h); border-radius: 10px; cursor: grab; position: relative; user-select: none; transition: transform 0.15s, box-shadow 0.15s; touch-action: none; flex-shrink: 0; }
+    .card:active { cursor: grabbing; }
+    .card-inner { width: 100%; height: 100%; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 6px; text-align: center; position: relative; overflow: hidden; background: linear-gradient(145deg, #f5e6c8, #e0c898); border: 2px solid #c9a66b; box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -2px 4px rgba(139,99,45,0.15); }
+    .card-inner::before { content: ''; position: absolute; inset: 4px; border: 1px solid rgba(139,99,45,0.25); border-radius: 6px; pointer-events: none; }
+    .card-icon { font-size: clamp(24px,5vw,36px); line-height: 1; margin-bottom: 4px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2)); }
+    .card-title { font-family: var(--font-display); font-size: clamp(9px,1.6vw,12px); font-weight: bold; color: var(--ink); line-height: 1.2; margin-bottom: 3px; }
+    .card-era { font-size: clamp(8px,1.3vw,10px); color: var(--stone); font-style: italic; }
+    .card-num-badge { position: absolute; top: 4px; left: 4px; width: 18px; height: 18px; border-radius: 50%; background: var(--ink); color: var(--gold-bright); font-size: 10px; display: flex; align-items: center; justify-content: center; font-family: sans-serif; font-weight: bold; }
+    .card.selected .card-inner { border-color: var(--gold-bright); box-shadow: 0 0 0 3px rgba(240,184,0,0.6), 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.5); }
+    .card.dragging { opacity: 0.9; z-index: 9999; cursor: grabbing; transform: rotate(3deg) scale(1.05); box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
+    .card.locked .card-inner { background: linear-gradient(145deg, #dcedc8, #a8d08d); border-color: var(--leaf); box-shadow: 0 0 0 2px rgba(39,174,96,0.4), 0 4px 12px rgba(0,0,0,0.3); }
+    .card.decoy .card-inner { opacity: 0.85; }
+    .card.placed { animation: cardPlace 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes cardPlace { 0% { transform: scale(1.12) rotate(-2deg); } 50% { transform: scale(0.95); } 100% { transform: scale(1) rotate(0deg); } }
+    .card.wrong-bounce { animation: wrongBounce 0.5s ease; }
+    @keyframes wrongBounce { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-10px) rotate(-2deg); } 40% { transform: translateX(10px) rotate(2deg); } 60% { transform: translateX(-7px); } 80% { transform: translateX(7px); } }
+    .stack-shake { animation: stackShake 0.55s ease; }
+    @keyframes stackShake { 0%,100% { transform: translateX(0); } 10% { transform: translateX(-12px) rotate(-1.5deg); } 30% { transform: translateX(12px) rotate(1.5deg); } 50% { transform: translateX(-8px); } 70% { transform: translateX(8px); } 90% { transform: translateX(-4px); } }
+    .level-glow { animation: levelGlow 0.8s ease; }
+    @keyframes levelGlow { 0% { box-shadow: none; } 40% { box-shadow: 0 0 60px rgba(240,184,0,0.8), 0 0 120px rgba(240,184,0,0.4); } 100% { box-shadow: none; } }
 
-/* ====== INSTRUCTIONS SCREEN ====== */
-#instructScreen {
-  background: linear-gradient(160deg, #1a0f06 0%, #2c1a0e 100%);
-  padding: 20px;
-  align-items: flex-start;
-  justify-content: flex-start;
-}
-.instruct-inner {
-  max-width: 820px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 20px 10px 40px;
-}
-.instruct-title {
-  font-family: var(--font-display);
-  font-size: clamp(20px,4vw,36px);
-  color: var(--gold-bright);
-  text-align: center;
-  margin-bottom: 24px;
-  text-shadow: 0 0 20px rgba(240,184,0,0.3);
-}
-.instruct-section {
-  background: rgba(245,230,200,0.06);
-  border: 1px solid rgba(201,146,42,0.3);
-  border-radius: 10px;
-  padding: 16px 20px;
-  margin-bottom: 16px;
-}
-.instruct-section h3 {
-  font-family: var(--font-display);
-  color: var(--gold);
-  font-size: clamp(13px,2.5vw,17px);
-  margin-bottom: 10px;
-  border-bottom: 1px solid rgba(201,146,42,0.25);
-  padding-bottom: 6px;
-}
-.instruct-section p, .instruct-section li {
-  color: var(--parchment-dark);
-  font-size: clamp(11px,2vw,14px);
-  line-height: 1.65;
-  margin-bottom: 4px;
-}
-.instruct-section ol, .instruct-section ul {
-  padding-left: 20px;
-}
-.step-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 10px; margin-top: 8px; }
-.step-item {
-  background: rgba(201,146,42,0.1);
-  border-radius: 8px;
-  padding: 10px 12px;
-  border-left: 3px solid var(--gold);
-}
-.step-num { font-size: 10px; text-transform: uppercase; color: var(--gold); letter-spacing: 2px; }
-.step-text { color: var(--parchment); font-size: clamp(11px,1.8vw,13px); margin-top: 3px; line-height: 1.4; }
-.timeline-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 8px;
-  margin-top: 8px;
-}
-.tl-era {
-  background: rgba(0,0,0,0.2);
-  border-radius: 8px;
-  padding: 8px 12px;
-  border-top: 3px solid;
-}
-.tl-era.prehistoric { border-color: #8B4513; }
-.tl-era.ancient     { border-color: var(--gold); }
-.tl-era.classical   { border-color: #C0C0C0; }
-.tl-era.postclass   { border-color: var(--leaf); }
-.tl-era-name { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: var(--parchment); }
-.tl-items { font-size: 11px; color: var(--stone-light); margin-top: 4px; line-height: 1.5; }
-.kbd-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 8px;
-  margin-top: 8px;
-}
-.kbd-item { display: flex; align-items: center; gap: 8px; }
-.kbd-key {
-  display: inline-flex; align-items: center; justify-content: center;
-  background: linear-gradient(180deg, #4a3520, #2c1a0e);
-  color: var(--gold-bright);
-  border: 1px solid var(--stone);
-  border-radius: 6px;
-  padding: 3px 8px;
-  font-size: 11px;
-  font-family: var(--font-ui);
-  white-space: nowrap;
-  min-width: 36px;
-  box-shadow: 0 2px 0 #1a0f06;
-}
-.kbd-desc { color: var(--parchment-dark); font-size: 12px; }
-.screenshot-placeholder {
-  border: 2px dashed var(--stone);
-  border-radius: 10px;
-  min-height: 180px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--stone-light);
-  font-size: 14px;
-  text-align: center;
-  gap: 8px;
-  background: rgba(0,0,0,0.15);
-  margin-top: 8px;
-}
-.screenshot-placeholder span:first-child { font-size: 32px; }
-.tips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 8px; margin-top: 8px; }
-.tip-item {
-  background: rgba(39,174,96,0.08);
-  border-left: 3px solid var(--leaf);
-  border-radius: 0 8px 8px 0;
-  padding: 8px 12px;
-  font-size: 12px;
-  color: var(--parchment-dark);
-  line-height: 1.45;
-}
-.instruct-back-btn { margin-top: 20px; width: 100%; text-align: center; }
+    /* END */
+    #endScreen { background: linear-gradient(160deg, #1a0f06 0%, #2c1a0e 100%); text-align: center; padding: 20px; }
+    .end-icon { font-size: clamp(50px,10vw,80px); margin-bottom: 12px; animation: endIconBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes endIconBounce { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); } }
+    .end-title { font-family: var(--font-display); font-size: clamp(24px,5vw,48px); color: var(--gold-bright); text-shadow: 0 0 30px rgba(240,184,0,0.5); margin-bottom: 8px; }
+    .end-subtitle { color: var(--parchment-dark); font-size: clamp(13px,2.3vw,17px); margin-bottom: 24px; }
+    .end-stats { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
+    .end-stat { background: rgba(245,230,200,0.06); border: 1px solid rgba(201,146,42,0.3); border-radius: 12px; padding: 16px 24px; min-width: 100px; }
+    .end-stat-val { font-family: var(--font-display); font-size: clamp(28px,5vw,42px); color: var(--gold); line-height: 1; }
+    .end-stat-lbl { font-size: 11px; color: var(--stone-light); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+    .star-rating { font-size: clamp(24px,5vw,42px); letter-spacing: 6px; margin-bottom: 12px; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    ::-webkit-scrollbar-thumb { background: var(--stone); border-radius: 3px; }
 
-/* ====== GAME SCREEN ====== */
-#gameScreen {
-  background: linear-gradient(160deg, #1a0f06 0%, #2c1a0e 70%, #1a0f06 100%);
-  flex-direction: column;
-  justify-content: flex-start;
-  overflow: hidden;
-  padding: 0;
-}
-/* HUD */
-.hud {
-  width: 100%;
-  background: linear-gradient(180deg, rgba(10,5,2,0.95) 0%, rgba(20,10,4,0.9) 100%);
-  border-bottom: 1px solid rgba(201,146,42,0.3);
-  padding: clamp(6px,1.5vw,10px) clamp(10px,2vw,20px);
-  display: flex;
-  align-items: center;
-  gap: clamp(8px,2vw,20px);
-  flex-shrink: 0;
-  z-index: 100;
-}
-.hud-civ {
-  flex: 1;
-  min-width: 0;
-}
-.hud-civ-name {
-  font-family: var(--font-display);
-  color: var(--gold-bright);
-  font-size: clamp(11px,2.2vw,17px);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: opacity 0.4s;
-}
-.hud-round {
-  font-size: clamp(9px,1.5vw,12px);
-  color: var(--stone-light);
-  letter-spacing: 1px;
-}
-.hud-right {
-  display: flex;
-  align-items: center;
-  gap: clamp(8px,2vw,16px);
-  flex-shrink: 0;
-}
-.hud-score {
-  display: flex; flex-direction: column; align-items: center;
-}
-.hud-score-val {
-  font-family: var(--font-display);
-  font-size: clamp(14px,2.5vw,20px);
-  color: var(--gold);
-  line-height: 1;
-}
-.hud-score-lbl { font-size: 9px; color: var(--stone-light); text-transform: uppercase; letter-spacing: 1px; }
-.hud-lives { display: flex; gap: 3px; align-items: center; }
-.life-icon {
-  font-size: clamp(14px,2.5vw,20px);
-  transition: all 0.3s;
-}
-.life-icon.lost { filter: grayscale(1); opacity: 0.25; transform: scale(0.8); }
-.timer-ring {
-  width: clamp(36px,6vw,52px);
-  height: clamp(36px,6vw,52px);
-  flex-shrink: 0;
-}
-.timer-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.timer-ring circle {
-  fill: none;
-  stroke: var(--stone-dark);
-  stroke-width: 4;
-  r: 18;
-  cx: 22; cy: 22;
-}
-.timer-ring .prog {
-  stroke: var(--gold);
-  stroke-dasharray: 113;
-  stroke-dashoffset: 0;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.9s linear, stroke 0.3s;
-}
-.timer-ring .prog.urgent { stroke: var(--ember); }
-.timer-num {
-  position: absolute;
-  font-size: clamp(10px,1.8vw,14px);
-  font-weight: bold;
-  color: var(--gold);
-}
-.timer-wrap { position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.mute-btn {
-  background: rgba(201,146,42,0.15);
-  border: 1px solid rgba(201,146,42,0.3);
-  color: var(--gold);
-  border-radius: 6px;
-  padding: 5px 8px;
-  cursor: pointer;
-  font-size: clamp(12px,2vw,16px);
-  transition: background 0.2s;
-  min-height: 36px; min-width: 36px;
-  display: flex; align-items: center; justify-content: center;
-}
-.mute-btn:hover { background: rgba(201,146,42,0.3); }
-
-/* GAME AREA */
-.game-area {
-  flex: 1;
-  display: flex;
-  gap: clamp(6px,1.5vw,16px);
-  padding: clamp(6px,1.5vw,14px);
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* CARD POOL */
-.card-pool {
-  width: clamp(110px,20vw,165px);
-  display: flex;
-  flex-direction: column;
-  gap: clamp(5px,1vw,10px);
-  align-items: center;
-  overflow-y: auto;
-  flex-shrink: 0;
-  padding-bottom: 10px;
-}
-.pool-label {
-  font-family: var(--font-display);
-  font-size: clamp(9px,1.5vw,12px);
-  color: var(--stone-light);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  text-align: center;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(139,115,85,0.3);
-  width: 100%;
-}
-
-/* STACK AREA */
-.stack-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0;
-  position: relative;
-  padding-bottom: 10px;
-}
-.stack-drop-zone {
-  width: clamp(110px,22vw,170px);
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 3px;
-  position: relative;
-}
-.stack-slot {
-  height: clamp(50px,9vw,75px);
-  border: 2px dashed rgba(201,146,42,0.3);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(201,146,42,0.2);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: all 0.25s;
-  position: relative;
-  background: rgba(0,0,0,0.1);
-}
-.stack-slot.drag-over {
-  border-color: var(--gold-bright);
-  background: rgba(240,184,0,0.1);
-  box-shadow: 0 0 12px rgba(240,184,0,0.3);
-}
-.stack-slot.filled {
-  border-color: transparent;
-  background: transparent;
-}
-.stack-platform {
-  width: clamp(130px,26vw,200px);
-  height: 20px;
-  background: linear-gradient(180deg, #8b7355, #5c4a2a);
-  border-radius: 0 0 12px 12px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-  margin: 0 auto;
-  flex-shrink: 0;
-}
-.progress-bar-wrap {
-  width: 100%;
-  max-width: 300px;
-  margin-top: 10px;
-  flex-shrink: 0;
-}
-.progress-bar-label {
-  font-size: 10px;
-  color: var(--stone-light);
-  text-align: center;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.progress-bar {
-  height: 6px;
-  background: rgba(139,115,85,0.3);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--gold), var(--gold-bright));
-  border-radius: 3px;
-  transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-/* INFO PANEL */
-.info-panel {
-  width: clamp(110px,20vw,180px);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-  overflow-y: auto;
-}
-.info-block {
-  background: rgba(245,230,200,0.05);
-  border: 1px solid rgba(201,146,42,0.2);
-  border-radius: 8px;
-  padding: 8px 10px;
-}
-.info-block-title {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--gold);
-  margin-bottom: 6px;
-}
-.kbd-hints { display: flex; flex-direction: column; gap: 3px; }
-.kbd-hint {
-  font-size: 10px;
-  color: var(--stone-light);
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-.kbd-hint-key {
-  background: rgba(90,62,40,0.5);
-  border: 1px solid var(--stone);
-  border-radius: 3px;
-  padding: 1px 5px;
-  color: var(--gold);
-  font-size: 9px;
-  font-family: var(--font-ui);
-  min-width: 22px;
-  text-align: center;
-}
-.order-pos {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 3px;
-}
-.order-num {
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: var(--stone-dark);
-  color: var(--stone-light);
-  font-size: 10px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.order-num.filled-ord {
-  background: var(--gold);
-  color: var(--ink);
-}
-.order-card-mini {
-  font-size: 10px;
-  color: var(--parchment-dark);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* NOTIFICATION TOAST */
-.toast {
-  position: fixed;
-  top: clamp(60px,10vw,90px);
-  left: 50%;
-  transform: translateX(-50%) translateY(-20px);
-  background: rgba(10,5,2,0.92);
-  border: 1px solid var(--gold);
-  border-radius: 20px;
-  padding: 6px 18px;
-  color: var(--gold-bright);
-  font-family: var(--font-display);
-  font-size: clamp(11px,2vw,14px);
-  letter-spacing: 1px;
-  opacity: 0;
-  transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  z-index: 1000;
-  pointer-events: none;
-  white-space: nowrap;
-  box-shadow: 0 4px 20px rgba(201,146,42,0.3);
-}
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* ====== CARD ====== */
-.card {
-  width: var(--card-w);
-  height: var(--card-h);
-  border-radius: 10px;
-  cursor: grab;
-  position: relative;
-  user-select: none;
-  transition: transform 0.15s, box-shadow 0.15s;
-  touch-action: none;
-  flex-shrink: 0;
-}
-.card:active { cursor: grabbing; }
-.card-inner {
-  width: 100%;
-  height: 100%;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 6px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(145deg, #f5e6c8, #e0c898);
-  border: 2px solid #c9a66b;
-  box-shadow:
-    0 4px 12px rgba(0,0,0,0.3),
-    inset 0 1px 0 rgba(255,255,255,0.5),
-    inset 0 -2px 4px rgba(139,99,45,0.15);
-}
-.card-inner::before {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border: 1px solid rgba(139,99,45,0.25);
-  border-radius: 6px;
-  pointer-events: none;
-}
-.card-icon {
-  font-size: clamp(24px,5vw,36px);
-  line-height: 1;
-  margin-bottom: 4px;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
-}
-.card-title {
-  font-family: var(--font-display);
-  font-size: clamp(9px,1.6vw,12px);
-  font-weight: bold;
-  color: var(--ink);
-  line-height: 1.2;
-  margin-bottom: 3px;
-}
-.card-era {
-  font-size: clamp(8px,1.3vw,10px);
-  color: var(--stone);
-  font-style: italic;
-}
-.card-num-badge {
-  position: absolute;
-  top: 4px; left: 4px;
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: var(--ink);
-  color: var(--gold-bright);
-  font-size: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-ui);
-  font-weight: bold;
-}
-.card.selected .card-inner {
-  border-color: var(--gold-bright);
-  box-shadow:
-    0 0 0 3px rgba(240,184,0,0.6),
-    0 8px 24px rgba(0,0,0,0.4),
-    inset 0 1px 0 rgba(255,255,255,0.5);
-}
-.card.dragging {
-  opacity: 0.9;
-  z-index: 9999;
-  cursor: grabbing;
-  transform: rotate(3deg) scale(1.05);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.5);
-}
-.card.locked .card-inner {
-  background: linear-gradient(145deg, #dcedc8, #a8d08d);
-  border-color: var(--leaf);
-  box-shadow: 0 0 0 2px rgba(39,174,96,0.4), 0 4px 12px rgba(0,0,0,0.3);
-}
-.card.decoy .card-inner {
-  opacity: 0.85;
-}
-.card.placed {
-  animation: cardPlace 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-@keyframes cardPlace {
-  0%   { transform: scale(1.12) rotate(-2deg); }
-  50%  { transform: scale(0.95); }
-  100% { transform: scale(1) rotate(0deg); }
-}
-.card.wrong-bounce {
-  animation: wrongBounce 0.5s ease;
-}
-@keyframes wrongBounce {
-  0%,100% { transform: translateX(0); }
-  20%     { transform: translateX(-10px) rotate(-2deg); }
-  40%     { transform: translateX(10px) rotate(2deg); }
-  60%     { transform: translateX(-7px); }
-  80%     { transform: translateX(7px); }
-}
-
-/* Stack shake */
-.stack-shake { animation: stackShake 0.55s ease; }
-@keyframes stackShake {
-  0%,100% { transform: translateX(0); }
-  10%     { transform: translateX(-12px) rotate(-1.5deg); }
-  30%     { transform: translateX(12px) rotate(1.5deg); }
-  50%     { transform: translateX(-8px); }
-  70%     { transform: translateX(8px); }
-  90%     { transform: translateX(-4px); }
-}
-
-/* Level up glow */
-.level-glow {
-  animation: levelGlow 0.8s ease;
-}
-@keyframes levelGlow {
-  0%   { box-shadow: none; }
-  40%  { box-shadow: 0 0 60px rgba(240,184,0,0.8), 0 0 120px rgba(240,184,0,0.4); }
-  100% { box-shadow: none; }
-}
-
-/* ====== END SCREEN ====== */
-#endScreen {
-  background: linear-gradient(160deg, #1a0f06 0%, #2c1a0e 100%);
-  text-align: center;
-  padding: 20px;
-}
-.end-icon {
-  font-size: clamp(50px,10vw,80px);
-  margin-bottom: 12px;
-  animation: endIconBounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-@keyframes endIconBounce {
-  0%   { transform: scale(0); opacity: 0; }
-  60%  { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(1); }
-}
-.end-title {
-  font-family: var(--font-display);
-  font-size: clamp(24px,5vw,48px);
-  color: var(--gold-bright);
-  text-shadow: 0 0 30px rgba(240,184,0,0.5);
-  margin-bottom: 8px;
-}
-.end-subtitle {
-  color: var(--parchment-dark);
-  font-size: clamp(13px,2.3vw,17px);
-  margin-bottom: 24px;
-}
-.end-stats {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 32px;
-}
-.end-stat {
-  background: rgba(245,230,200,0.06);
-  border: 1px solid rgba(201,146,42,0.3);
-  border-radius: 12px;
-  padding: 16px 24px;
-  min-width: 100px;
-}
-.end-stat-val {
-  font-family: var(--font-display);
-  font-size: clamp(28px,5vw,42px);
-  color: var(--gold);
-  line-height: 1;
-}
-.end-stat-lbl {
-  font-size: 11px;
-  color: var(--stone-light);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-top: 4px;
-}
-
-/* ====== SCROLL STYLES ====== */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-::-webkit-scrollbar-thumb { background: var(--stone); border-radius: 3px; }
-
-/* ====== RESPONSIVE ====== */
-@media (max-width: 600px) {
-  :root {
-    --card-w: clamp(80px, 24vw, 110px);
-    --card-h: clamp(90px, 27vw, 130px);
-  }
-  .game-area { flex-direction: column; overflow-y: auto; }
-  .card-pool { flex-direction: row; flex-wrap: wrap; width: 100%; overflow-y: visible; justify-content: center; }
-  .info-panel { flex-direction: row; width: 100%; overflow-x: auto; }
-  .info-block { min-width: 150px; }
-  .stack-area { min-height: 280px; }
-}
-@media (max-height: 600px) and (orientation: landscape) {
-  .hud { padding: 4px 12px; }
-  .game-area { gap: 6px; padding: 4px 8px; }
-}
-</style>
+    @media (max-width: 600px) {
+      :root { --card-w: clamp(80px, 24vw, 110px); --card-h: clamp(90px, 27vw, 130px); }
+      .game-area { flex-direction: column; overflow-y: auto; padding: 8px; gap: 8px; }
+      .card-pool { flex-direction: row; flex-wrap: wrap; width: 100%; height: auto; overflow-y: visible; justify-content: center; padding-bottom: 4px; }
+      .card-pool .pool-label { width: 100%; }
+      .info-panel { flex-direction: row; width: 100%; overflow-x: auto; height: auto; }
+      .info-block { min-width: 150px; }
+      .stack-area { flex: 1; min-height: 240px; justify-content: center; padding: 4px 0; }
+      .stack-slot { height: clamp(44px, 10vw, 60px); }
+    }
+    @media (max-height: 600px) and (orientation: landscape) {
+      .hud { padding: 4px 12px; }
+      .game-area { gap: 6px; padding: 4px 8px; }
+      .stack-slot { height: clamp(36px, 7vw, 52px); }
+      .card-pool { gap: 4px; }
+      .card { --card-w: clamp(70px, 14vw, 100px); --card-h: clamp(80px, 16vw, 110px); }
+    }
+  </style>
 </head>
 <body>
 
-<!-- ========== START SCREEN ========== -->
-<div id="startScreen" class="screen active">
+<!-- START -->
+<div id="startScreen" class="screen active parchment-bg">
   <div class="start-emblem">🏛️</div>
   <h1 class="start-title">Civilization<br>Stacker</h1>
   <p class="start-subtitle">Build History · One Discovery at a Time</p>
-  <p class="start-desc">
-    Stack civilization milestones in the correct chronological order.<br>
-    Earliest at the bottom — newest at the top.<br>
-    Build 10 civilizations to claim victory!
-  </p>
+  <p class="start-desc">Stack milestones in correct order — earliest at the bottom, newest at the top. Build 10 civilizations to claim victory!</p>
   <div class="btn-row">
     <button class="btn btn-primary" onclick="startGame()">▶ Play Now</button>
-    <button class="btn btn-secondary" onclick="showInstructions()">📜 How to Play</button>
+    <button class="btn btn-secondary" onclick="showScreen('instructScreen')">📜 How to Play</button>
   </div>
 </div>
 
-<!-- ========== INSTRUCTIONS SCREEN ========== -->
+<!-- INSTRUCTIONS – visual, graphics-rich -->
 <div id="instructScreen" class="screen">
   <div class="instruct-inner">
-    <h2 class="instruct-title">📜 How to Play — Civilization Stacker</h2>
-
-    <!-- Step Guide -->
-    <div class="instruct-section">
-      <h3>Step-by-Step Guide</h3>
-      <div class="step-grid">
-        <div class="step-item"><div class="step-num">Step 1</div><div class="step-text">Look at the civilization era you're building (e.g., Ancient Egypt or Classical Greece).</div></div>
-        <div class="step-item"><div class="step-num">Step 2</div><div class="step-text">Cards show different advancements: technology, agriculture, arts, and government.</div></div>
-        <div class="step-item"><div class="step-num">Step 3</div><div class="step-text">Drag cards to the stack area in chronological order — <strong style="color:var(--gold)">earliest at the bottom</strong>.</div></div>
-        <div class="step-item"><div class="step-num">Step 4</div><div class="step-text">Each correct placement builds the civilization higher. Wrong placement = stack shakes!</div></div>
-        <div class="step-item"><div class="step-num">Step 5</div><div class="step-text">Complete the full stack of 4–6 cards to advance to the next civilization!</div></div>
+    <h2 class="instruct-title">📜 How to Play</h2>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab1">🎯 Basics</button>
+      <button class="tab-btn" data-tab="tab2">🖱️ Controls</button>
+      <button class="tab-btn" data-tab="tab3">📅 Timeline</button>
+      <button class="tab-btn" data-tab="tab4">⭐ Tips</button>
+    </div>
+    <div id="tab1" class="tab-content active">
+      <h3>🏛️ The Goal</h3>
+      <p>Stack civilization milestones in <strong>chronological order</strong> — oldest at the bottom, newest at the top.</p>
+      <div class="icon-grid">
+        <div class="icon-item"><span class="big-icon">🌾</span><span class="label">Agriculture</span></div>
+        <div class="icon-item"><span class="big-icon">📝</span><span class="label">Writing</span></div>
+        <div class="icon-item"><span class="big-icon">⚖️</span><span class="label">Laws</span></div>
+        <div class="icon-item"><span class="big-icon">🏛️</span><span class="label">Democracy</span></div>
+        <div class="icon-item"><span class="big-icon">🏟️</span><span class="label">Architecture</span></div>
+        <div class="icon-item"><span class="big-icon">🧭</span><span class="label">Compass</span></div>
       </div>
+      <p style="margin-top:8px;">Complete <strong>10 civilizations</strong> to win. Earn <strong>⭐ stars</strong> based on your final score.</p>
     </div>
-
-    <!-- Timeline Reference -->
-    <div class="instruct-section">
-      <h3>Chronological Reference Timeline</h3>
-      <div class="timeline-row">
-        <div class="tl-era prehistoric">
-          <div class="tl-era-name">⛰️ Prehistoric</div>
-          <div class="tl-items">Fire · Stone Tools · Language</div>
-        </div>
-        <div class="tl-era ancient">
-          <div class="tl-era-name">🌾 Ancient (3000–500 BCE)</div>
-          <div class="tl-items">Agriculture · Wheel · Writing · Bronze</div>
-        </div>
-        <div class="tl-era classical">
-          <div class="tl-era-name">🏛️ Classical (500 BCE–500 CE)</div>
-          <div class="tl-items">Iron · Democracy · Philosophy · Roads</div>
-        </div>
-        <div class="tl-era postclass">
-          <div class="tl-era-name">📜 Post-Classical (500–1500 CE)</div>
-          <div class="tl-items">Paper · Gunpowder · Compass · Printing</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Eras Reference -->
-    <div class="instruct-section">
-      <h3>Civilization Pathways</h3>
-      <p><strong style="color:var(--gold)">Mesopotamia:</strong> Agriculture → Writing → Code of Laws → Mathematics → Astronomy</p>
-      <p><strong style="color:var(--gold)">Egypt:</strong> Agriculture → Writing → Pyramids → Medicine → Calendar</p>
-      <p><strong style="color:var(--gold)">Classical Greece:</strong> Democracy → Philosophy → Architecture → Olympics → Theatre</p>
-      <p><strong style="color:var(--gold)">Roman Empire:</strong> Republic → Roads → Aqueducts → Concrete → Latin → Code of Laws</p>
-    </div>
-
-    <!-- Keyboard Controls -->
-    <div class="instruct-section">
-      <h3>⌨️ Keyboard Controls (Desktop)</h3>
+    <div id="tab2" class="tab-content">
+      <h3>🖱️ Controls</h3>
       <div class="kbd-grid">
-        <div class="kbd-item"><span class="kbd-key">1–5</span><span class="kbd-desc">Select a card from the pool</span></div>
-        <div class="kbd-item"><span class="kbd-key">↑ ↓</span><span class="kbd-desc">Move selected card up/down in stack</span></div>
-        <div class="kbd-item"><span class="kbd-key">Enter</span><span class="kbd-desc">Place selected card in next slot</span></div>
-        <div class="kbd-item"><span class="kbd-key">Backspace</span><span class="kbd-desc">Remove last placed card</span></div>
-        <div class="kbd-item"><span class="kbd-key">R</span><span class="kbd-desc">Reset current round</span></div>
-        <div class="kbd-item"><span class="kbd-key">M</span><span class="kbd-desc">Mute / Unmute audio</span></div>
+        <div class="kbd-item"><span class="kbd-key">1–5</span><span>Select card</span></div>
+        <div class="kbd-item"><span class="kbd-key">Enter</span><span>Place selected</span></div>
+        <div class="kbd-item"><span class="kbd-key">⌫</span><span>Remove last</span></div>
+        <div class="kbd-item"><span class="kbd-key">R</span><span>Reset round</span></div>
+        <div class="kbd-item"><span class="kbd-key">M</span><span>Mute</span></div>
+      </div>
+      <div class="icon-grid" style="grid-template-columns: repeat(auto-fill, minmax(100px,1fr));">
+        <div class="icon-item"><span class="big-icon">👆</span><span class="label">Drag & Drop</span></div>
+        <div class="icon-item"><span class="big-icon">👆👆</span><span class="label">Double‑tap to remove</span></div>
       </div>
     </div>
-
-    <!-- Touch Controls -->
-    <div class="instruct-section">
-      <h3>👆 Touch Controls (Mobile &amp; Tablet)</h3>
-      <ul>
-        <li>Drag cards from the left panel onto the stack area (right side)</li>
-        <li>Drop the card in a slot — it snaps if placed in the correct order</li>
-        <li>The stack builds <strong>from bottom (oldest) to top (newest)</strong></li>
-        <li>Wrong placement shakes the stack — you lose a life!</li>
-        <li>Double-tap a card on the stack to remove it</li>
+    <div id="tab3" class="tab-content">
+      <h3>📅 Timeline Reference</h3>
+      <div class="timeline-visual">
+        <div class="tl-era"><span class="emoji">⛰️</span> Prehistoric</div>
+        <div class="tl-era" style="border-color:#f0b800;"><span class="emoji">🌾</span> Ancient (3000–500 BCE)</div>
+        <div class="tl-era" style="border-color:#c0c0c0;"><span class="emoji">🏛️</span> Classical (500 BCE–500 CE)</div>
+        <div class="tl-era" style="border-color:#27ae60;"><span class="emoji">📜</span> Post‑Classical (500–1500 CE)</div>
+      </div>
+      <ul style="margin-top:8px;">
+        <li><strong>🌾 Ancient:</strong> Agriculture, Wheel, Writing, Bronze</li>
+        <li><strong>🏛️ Classical:</strong> Iron, Democracy, Philosophy, Roads</li>
+        <li><strong>📜 Post‑Classical:</strong> Paper, Gunpowder, Compass, Printing</li>
       </ul>
     </div>
-
-    <!-- Gameplay Screenshot Placeholder -->
-    <div class="instruct-section">
-      <h3>📷 GAMEPLAY SCREENSHOT</h3>
-      <div class="screenshot-placeholder">
-        <img src="gameplay.png" width="100%" height="100%">
+    <div id="tab4" class="tab-content">
+      <h3>💡 Quick Tips</h3>
+      <div class="icon-grid" style="grid-template-columns: repeat(auto-fill, minmax(140px,1fr));">
+        <div class="icon-item"><span class="big-icon">🍞</span><span class="label">Food first (Agriculture)</span></div>
+        <div class="icon-item"><span class="big-icon">✍️</span><span class="label">Writing before laws</span></div>
+        <div class="icon-item"><span class="big-icon">🚫</span><span class="label">Decoys = lose a life</span></div>
+        <div class="icon-item"><span class="big-icon">⚡</span><span class="label">Speed = bonus points</span></div>
+        <div class="icon-item"><span class="big-icon">⭐</span><span class="label">2000+ = 3 stars</span></div>
       </div>
     </div>
-
-    <!-- Tips -->
-    <div class="instruct-section">
-      <h3>💡 Game Tips</h3>
-      <div class="tips-grid">
-        <div class="tip-item">Think about what came first — agriculture or writing?</div>
-        <div class="tip-item">Civilizations need food before they can build cities!</div>
-        <div class="tip-item">Some cards depend on others — roads need the wheel.</div>
-        <div class="tip-item">Stack from <strong>OLDEST at the bottom</strong> to NEWEST at the top!</div>
-        <div class="tip-item">Watch for decoy cards — not everything belongs in this civilization!</div>
-        <div class="tip-item">Each civilization has its own unique timeline — trust your knowledge!</div>
-      </div>
-    </div>
-
     <div class="instruct-back-btn">
-      <button class="btn btn-primary" onclick="showScreen('startScreen')">← Back to Start</button>
+      <button class="btn btn-primary" onclick="showScreen('startScreen')">← Back</button>
     </div>
   </div>
 </div>
 
-<!-- ========== GAME SCREEN ========== -->
+<!-- GAME -->
 <div id="gameScreen" class="screen">
-  <!-- HUD -->
   <div class="hud">
     <div class="hud-civ">
       <div class="hud-civ-name" id="civName">Ancient Mesopotamia</div>
@@ -914,47 +266,30 @@ body { display: flex; flex-direction: column; }
         <span class="life-icon">❤️</span>
       </div>
       <div class="timer-wrap">
-        <div class="timer-ring">
-          <svg viewBox="0 0 44 44">
-            <circle cx="22" cy="22" r="18"/>
-            <circle class="prog" id="timerCircle" cx="22" cy="22" r="18"/>
-          </svg>
-        </div>
+        <div class="timer-ring"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18"/><circle class="prog" id="timerCircle" cx="22" cy="22" r="18"/></svg></div>
         <div class="timer-num" id="timerNum">20</div>
       </div>
-      <button class="mute-btn" id="muteBtn" onclick="toggleMute()" title="Toggle Music (M)">🔊</button>
+      <button class="mute-btn" id="muteBtn" onclick="toggleMute()">🔊</button>
     </div>
   </div>
-
-  <!-- Game Area -->
   <div class="game-area">
-    <!-- Card Pool (left) -->
-    <div class="card-pool" id="cardPool">
-      <div class="pool-label">Available Cards</div>
-    </div>
-
-    <!-- Stack Area (center) -->
+    <div class="card-pool" id="cardPool"><div class="pool-label">Available Cards</div></div>
     <div class="stack-area">
       <div class="stack-drop-zone" id="stackZone"></div>
       <div class="stack-platform"></div>
       <div class="progress-bar-wrap">
         <div class="progress-bar-label" id="progressLabel">Place 0 / 4 cards</div>
-        <div class="progress-bar">
-          <div class="progress-fill" id="progressFill" style="width:0%"></div>
-        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
       </div>
     </div>
-
-    <!-- Info Panel (right) -->
     <div class="info-panel">
       <div class="info-block">
         <div class="info-block-title">⌨️ Controls</div>
         <div class="kbd-hints">
-          <div class="kbd-hint"><span class="kbd-hint-key">1-5</span><span>Select card</span></div>
-          <div class="kbd-hint"><span class="kbd-hint-key">Enter</span><span>Place card</span></div>
-          <div class="kbd-hint"><span class="kbd-hint-key">⌫</span><span>Remove last</span></div>
-          <div class="kbd-hint"><span class="kbd-hint-key">R</span><span>Reset round</span></div>
-          <div class="kbd-hint"><span class="kbd-hint-key">M</span><span>Mute</span></div>
+          <div class="kbd-hint"><span class="kbd-hint-key">1-5</span><span>Select</span></div>
+          <div class="kbd-hint"><span class="kbd-hint-key">Enter</span><span>Place</span></div>
+          <div class="kbd-hint"><span class="kbd-hint-key">⌫</span><span>Remove</span></div>
+          <div class="kbd-hint"><span class="kbd-hint-key">R</span><span>Reset</span></div>
         </div>
       </div>
       <div class="info-block">
@@ -965,24 +300,16 @@ body { display: flex; flex-direction: column; }
   </div>
 </div>
 
-<!-- ========== END SCREEN ========== -->
+<!-- END -->
 <div id="endScreen" class="screen">
   <div class="end-icon" id="endIcon">🏛️</div>
+  <div class="star-rating" id="starRating">⭐⭐⭐</div>
   <h2 class="end-title" id="endTitle">Game Over</h2>
   <p class="end-subtitle" id="endSubtitle">Your civilization crumbled...</p>
   <div class="end-stats">
-    <div class="end-stat">
-      <div class="end-stat-val" id="endScore">0</div>
-      <div class="end-stat-lbl">Final Score</div>
-    </div>
-    <div class="end-stat">
-      <div class="end-stat-val" id="endRounds">0</div>
-      <div class="end-stat-lbl">Rounds Done</div>
-    </div>
-    <div class="end-stat">
-      <div class="end-stat-val" id="endLives">0</div>
-      <div class="end-stat-lbl">Lives Left</div>
-    </div>
+    <div class="end-stat"><div class="end-stat-val" id="endScore">0</div><div class="end-stat-lbl">Final Score</div></div>
+    <div class="end-stat"><div class="end-stat-val" id="endRounds">0</div><div class="end-stat-lbl">Rounds Done</div></div>
+    <div class="end-stat"><div class="end-stat-val" id="endLives">0</div><div class="end-stat-lbl">Lives Left</div></div>
   </div>
   <div class="btn-row">
     <button class="btn btn-primary" onclick="startGame()">🔄 Play Again</button>
@@ -990,821 +317,341 @@ body { display: flex; flex-direction: column; }
   </div>
 </div>
 
-<!-- Toast Notification -->
 <div class="toast" id="toast"></div>
 
 <script>
-/* ============================================================
-   CIVILIZATION STACKER — Full Game Logic
-   ============================================================ */
-
-// ——— GAME DATA ———
+// ─── DATA ───
 const ROUNDS = [
-  {
-    round: 1,
-    civ: "Ancient Mesopotamia",
-    era: "3000–2000 BCE",
-    cards: [
-      { id:'agri',  icon:'🌾', title:'Agriculture',    era:'~8000 BCE',  category:'Agriculture', order:1 },
-      { id:'write', icon:'📝', title:'Writing',         era:'~3200 BCE',  category:'Writing',     order:2 },
-      { id:'law',   icon:'⚖️', title:'Code of Laws',   era:'~2100 BCE',  category:'Government',  order:3 },
-      { id:'math',  icon:'🔢', title:'Mathematics',     era:'~2000 BCE',  category:'Science',     order:4 },
-    ],
-    correctOrder: ['agri','write','law','math'],
-    decoys: []
-  },
-  {
-    round: 2,
-    civ: "Ancient Mesopotamia",
-    era: "2500–1500 BCE",
-    cards: [
-      { id:'wheel', icon:'⚙️', title:'The Wheel',      era:'~3500 BCE',  category:'Technology',  order:1 },
-      { id:'city',  icon:'🏙️', title:'City-States',    era:'~3200 BCE',  category:'Government',  order:2 },
-      { id:'irrig', icon:'💧', title:'Irrigation',     era:'~3000 BCE',  category:'Agriculture', order:3 },
-      { id:'astro', icon:'⭐', title:'Astronomy',      era:'~2000 BCE',  category:'Science',     order:4 },
-    ],
-    correctOrder: ['wheel','city','irrig','astro'],
-    decoys: []
-  },
-  {
-    round: 3,
-    civ: "Ancient Egypt",
-    era: "3100–2000 BCE",
-    cards: [
-      { id:'eagri', icon:'🌾', title:'Agriculture',    era:'~4000 BCE',  category:'Agriculture', order:1 },
-      { id:'ehier', icon:'𓂀', title:'Hieroglyphics',  era:'~3200 BCE',  category:'Writing',     order:2 },
-      { id:'epyra', icon:'🔺', title:'Pyramids',       era:'~2560 BCE',  category:'Arts',        order:3 },
-      { id:'emed',  icon:'⚕️', title:'Medicine',      era:'~2000 BCE',  category:'Science',     order:4 },
-      { id:'ecal',  icon:'📅', title:'Calendar',       era:'~1700 BCE',  category:'Science',     order:5 },
-    ],
-    correctOrder: ['eagri','ehier','epyra','emed','ecal'],
-    decoys: [
-      { id:'demo',  icon:'🏛️', title:'Democracy',     era:'~500 BCE',   category:'Government',  isDecoy:true },
-    ]
-  },
-  {
-    round: 4,
-    civ: "Ancient Egypt",
-    era: "2600–1500 BCE",
-    cards: [
-      { id:'epapyr',icon:'📜', title:'Papyrus',        era:'~3000 BCE',  category:'Writing',     order:1 },
-      { id:'emumi', icon:'⚰️', title:'Mummification',  era:'~2600 BCE',  category:'Arts',        order:2 },
-      { id:'ephara',icon:'👑', title:'Pharaoh System', era:'~2500 BCE',  category:'Government',  order:3 },
-      { id:'etempl',icon:'⛩️', title:'Temple Building',era:'~2000 BCE',  category:'Arts',        order:4 },
-      { id:'etrade',icon:'🚢', title:'Trade Routes',   era:'~1500 BCE',  category:'Technology',  order:5 },
-    ],
-    correctOrder: ['epapyr','emumi','ephara','etempl','etrade'],
-    decoys: [
-      { id:'gpress',icon:'🖨️', title:'Printing Press', era:'~1440 CE',  category:'Technology',  isDecoy:true },
-    ]
-  },
-  {
-    round: 5,
-    civ: "Classical Greece",
-    era: "800–300 BCE",
-    cards: [
-      { id:'gdemo', icon:'🏛️', title:'Democracy',     era:'~507 BCE',   category:'Government',  order:1 },
-      { id:'gphil', icon:'🦉', title:'Philosophy',    era:'~450 BCE',   category:'Science',     order:2 },
-      { id:'garch', icon:'🏟️', title:'Architecture',  era:'~440 BCE',   category:'Arts',        order:3 },
-      { id:'golym', icon:'🏅', title:'Olympics',      era:'~776 BCE',   category:'Arts',        order:0 },
-      { id:'gthr',  icon:'🎭', title:'Theatre',       era:'~534 BCE',   category:'Arts',        order:4 },
-    ],
-    correctOrder: ['golym','gdemo','gphil','garch','gthr'],
-    decoys: [
-      { id:'gbronze',icon:'🔶',title:'Bronze Metallurgy',era:'~3000 BCE',category:'Technology', isDecoy:true },
-      { id:'gpaper',icon:'📄', title:'Paper',          era:'~105 CE',   category:'Technology',  isDecoy:true },
-    ]
-  },
-  {
-    round: 6,
-    civ: "Classical Greece",
-    era: "600–200 BCE",
-    cards: [
-      { id:'gcity', icon:'🏙️', title:'City-States',   era:'~800 BCE',   category:'Government',  order:1 },
-      { id:'gmath', icon:'📐', title:'Mathematics',   era:'~600 BCE',   category:'Science',     order:2 },
-      { id:'gmed',  icon:'⚕️', title:'Medicine',      era:'~400 BCE',   category:'Science',     order:3 },
-      { id:'gscul', icon:'🗿', title:'Sculpture',     era:'~400 BCE',   category:'Arts',        order:4 },
-      { id:'gnavy', icon:'⚓', title:'Naval Power',   era:'~200 BCE',   category:'Technology',  order:5 },
-    ],
-    correctOrder: ['gcity','gmath','gmed','gscul','gnavy'],
-    decoys: [
-      { id:'ggun',  icon:'💥', title:'Gunpowder',     era:'~850 CE',   category:'Technology',   isDecoy:true },
-      { id:'gfeu',  icon:'🏰', title:'Feudalism',     era:'~900 CE',   category:'Government',   isDecoy:true },
-    ]
-  },
-  {
-    round: 7,
-    civ: "Roman Empire",
-    era: "500 BCE – 500 CE",
-    cards: [
-      { id:'rrep',  icon:'⚖️', title:'Republic',      era:'~509 BCE',   category:'Government',  order:1 },
-      { id:'rroad', icon:'🛤️', title:'Roads',          era:'~400 BCE',   category:'Infrastructure',order:2 },
-      { id:'raque', icon:'🌊', title:'Aqueducts',     era:'~300 BCE',   category:'Infrastructure',order:3 },
-      { id:'rcon',  icon:'🏗️', title:'Concrete',      era:'~100 BCE',   category:'Technology',  order:4 },
-      { id:'rlat',  icon:'🔤', title:'Latin Language', era:'~100 BCE',   category:'Writing',     order:5 },
-      { id:'rcolaw',icon:'📜', title:'Code of Laws',  era:'~100 CE',    category:'Government',  order:6 },
-    ],
-    correctOrder: ['rrep','rroad','raque','rcon','rlat','rcolaw'],
-    decoys: [
-      { id:'rfeu',  icon:'🏰', title:'Feudalism',     era:'~900 CE',   category:'Government',   isDecoy:true },
-      { id:'rgun',  icon:'💥', title:'Gunpowder',     era:'~850 CE',   category:'Technology',   isDecoy:true },
-    ]
-  },
-  {
-    round: 8,
-    civ: "Roman Empire",
-    era: "200 BCE – 400 CE",
-    cards: [
-      { id:'rmil',  icon:'⚔️', title:'Military Legion',era:'~200 BCE',  category:'Government',  order:1 },
-      { id:'rcoin', icon:'🪙', title:'Coinage System', era:'~150 BCE',  category:'Technology',  order:2 },
-      { id:'rarc',  icon:'🏛️', title:'Arch & Vault',  era:'~100 BCE',  category:'Arts',        order:3 },
-      { id:'remp',  icon:'👑', title:'Roman Empire',  era:'~27 BCE',    category:'Government',  order:4 },
-      { id:'rchri', icon:'✝️', title:'Christianity',  era:'~100 CE',    category:'Arts',        order:5 },
-      { id:'rforum',icon:'🏟️', title:'Forum Romanum', era:'~200 CE',   category:'Arts',        order:6 },
-    ],
-    correctOrder: ['rmil','rcoin','rarc','remp','rchri','rforum'],
-    decoys: [
-      { id:'rprint',icon:'🖨️', title:'Printing Press', era:'~1440 CE', category:'Technology',  isDecoy:true },
-    ]
-  },
-  {
-    round: 9,
-    civ: "Ancient China",
-    era: "2000 BCE – 600 CE",
-    cards: [
-      { id:'cagri', icon:'🌾', title:'Agriculture',   era:'~5000 BCE',  category:'Agriculture', order:1 },
-      { id:'cbronze',icon:'🔶',title:'Bronze Casting', era:'~2000 BCE', category:'Technology',  order:2 },
-      { id:'cwrite',icon:'📝', title:'Chinese Writing',era:'~1200 BCE', category:'Writing',     order:3 },
-      { id:'csilk', icon:'🪡', title:'Silk Production',era:'~2700 BCE', category:'Technology',  order:2 },
-      { id:'cwall', icon:'🧱', title:'Great Wall',    era:'~200 BCE',   category:'Infrastructure',order:4 },
-      { id:'cpaper',icon:'📄', title:'Paper',         era:'~105 CE',    category:'Technology',  order:5 },
-    ],
-    correctOrder: ['cagri','csilk','cbronze','cwrite','cwall','cpaper'],
-    decoys: []
-  },
-  {
-    round: 10,
-    civ: "Ancient China — Dynasty Era",
-    era: "200 BCE – 1300 CE",
-    cards: [
-      { id:'ccomp', icon:'🧭', title:'Compass',       era:'~200 BCE',   category:'Technology',  order:1 },
-      { id:'cporce',icon:'🏺', title:'Porcelain',     era:'~618 CE',    category:'Arts',        order:3 },
-      { id:'cprint',icon:'🖨️', title:'Printing',      era:'~700 CE',    category:'Technology',  order:4 },
-      { id:'cexam', icon:'📋', title:'Civil Service Exam',era:'~605 CE',category:'Government',  order:2 },
-      { id:'cgun',  icon:'💥', title:'Gunpowder',     era:'~850 CE',    category:'Technology',  order:5 },
-      { id:'cships',icon:'⛵', title:'Treasure Ships', era:'~1405 CE',  category:'Technology',  order:6 },
-    ],
-    correctOrder: ['ccomp','cexam','cporce','cprint','cgun','cships'],
-    decoys: []
-  }
+  { round:1, civ:"Ancient Mesopotamia", era:"3000–2000 BCE", correctOrder:['agri','write','law','math'], cards:[
+    { id:'agri', icon:'🌾', title:'Agriculture', era:'~8000 BCE', category:'Agriculture' },
+    { id:'write', icon:'📝', title:'Writing', era:'~3200 BCE', category:'Writing' },
+    { id:'law', icon:'⚖️', title:'Code of Laws', era:'~2100 BCE', category:'Government' },
+    { id:'math', icon:'🔢', title:'Mathematics', era:'~2000 BCE', category:'Science' }
+  ], decoys:[] },
+  { round:2, civ:"Ancient Mesopotamia", era:"2500–1500 BCE", correctOrder:['wheel','city','irrig','astro'], cards:[
+    { id:'wheel', icon:'⚙️', title:'The Wheel', era:'~3500 BCE', category:'Technology' },
+    { id:'city', icon:'🏙️', title:'City-States', era:'~3200 BCE', category:'Government' },
+    { id:'irrig', icon:'💧', title:'Irrigation', era:'~3000 BCE', category:'Agriculture' },
+    { id:'astro', icon:'⭐', title:'Astronomy', era:'~2000 BCE', category:'Science' }
+  ], decoys:[] },
+  { round:3, civ:"Ancient Egypt", era:"3100–2000 BCE", correctOrder:['eagri','ehier','epyra','emed','ecal'], cards:[
+    { id:'eagri', icon:'🌾', title:'Agriculture', era:'~4000 BCE', category:'Agriculture' },
+    { id:'ehier', icon:'𓂀', title:'Hieroglyphics', era:'~3200 BCE', category:'Writing' },
+    { id:'epyra', icon:'🔺', title:'Pyramids', era:'~2560 BCE', category:'Arts' },
+    { id:'emed', icon:'⚕️', title:'Medicine', era:'~2000 BCE', category:'Science' },
+    { id:'ecal', icon:'📅', title:'Calendar', era:'~1700 BCE', category:'Science' }
+  ], decoys:[{ id:'demo', icon:'🏛️', title:'Democracy', era:'~500 BCE', category:'Government', isDecoy:true }] },
+  { round:4, civ:"Ancient Egypt", era:"2600–1500 BCE", correctOrder:['epapyr','emumi','ephara','etempl','etrade'], cards:[
+    { id:'epapyr', icon:'📜', title:'Papyrus', era:'~3000 BCE', category:'Writing' },
+    { id:'emumi', icon:'⚰️', title:'Mummification', era:'~2600 BCE', category:'Arts' },
+    { id:'ephara', icon:'👑', title:'Pharaoh System', era:'~2500 BCE', category:'Government' },
+    { id:'etempl', icon:'⛩️', title:'Temple Building', era:'~2000 BCE', category:'Arts' },
+    { id:'etrade', icon:'🚢', title:'Trade Routes', era:'~1500 BCE', category:'Technology' }
+  ], decoys:[{ id:'gpress', icon:'🖨️', title:'Printing Press', era:'~1440 CE', category:'Technology', isDecoy:true }] },
+  { round:5, civ:"Classical Greece", era:"800–300 BCE", correctOrder:['golym','gdemo','gphil','garch','gthr'], cards:[
+    { id:'golym', icon:'🏅', title:'Olympics', era:'~776 BCE', category:'Arts' },
+    { id:'gdemo', icon:'🏛️', title:'Democracy', era:'~507 BCE', category:'Government' },
+    { id:'gphil', icon:'🦉', title:'Philosophy', era:'~450 BCE', category:'Science' },
+    { id:'garch', icon:'🏟️', title:'Architecture', era:'~440 BCE', category:'Arts' },
+    { id:'gthr', icon:'🎭', title:'Theatre', era:'~534 BCE', category:'Arts' }
+  ], decoys:[{ id:'gbronze', icon:'🔶', title:'Bronze Metallurgy', era:'~3000 BCE', category:'Technology', isDecoy:true }] },
+  { round:6, civ:"Classical Greece", era:"600–200 BCE", correctOrder:['gcity','gmath','gmed','gscul','gnavy'], cards:[
+    { id:'gcity', icon:'🏙️', title:'City-States', era:'~800 BCE', category:'Government' },
+    { id:'gmath', icon:'📐', title:'Mathematics', era:'~600 BCE', category:'Science' },
+    { id:'gmed', icon:'⚕️', title:'Medicine', era:'~400 BCE', category:'Science' },
+    { id:'gscul', icon:'🗿', title:'Sculpture', era:'~400 BCE', category:'Arts' },
+    { id:'gnavy', icon:'⚓', title:'Naval Power', era:'~200 BCE', category:'Technology' }
+  ], decoys:[{ id:'ggun', icon:'💥', title:'Gunpowder', era:'~850 CE', category:'Technology', isDecoy:true }] },
+  { round:7, civ:"Roman Empire", era:"500 BCE – 500 CE", correctOrder:['rrep','rroad','raque','rcon','rlat','rcolaw'], cards:[
+    { id:'rrep', icon:'⚖️', title:'Republic', era:'~509 BCE', category:'Government' },
+    { id:'rroad', icon:'🛤️', title:'Roads', era:'~400 BCE', category:'Infrastructure' },
+    { id:'raque', icon:'🌊', title:'Aqueducts', era:'~300 BCE', category:'Infrastructure' },
+    { id:'rcon', icon:'🏗️', title:'Concrete', era:'~100 BCE', category:'Technology' },
+    { id:'rlat', icon:'🔤', title:'Latin Language', era:'~100 BCE', category:'Writing' },
+    { id:'rcolaw', icon:'📜', title:'Code of Laws', era:'~100 CE', category:'Government' }
+  ], decoys:[{ id:'rfeu', icon:'🏰', title:'Feudalism', era:'~900 CE', category:'Government', isDecoy:true }] },
+  { round:8, civ:"Roman Empire", era:"200 BCE – 400 CE", correctOrder:['rmil','rcoin','rarc','remp','rchri','rforum'], cards:[
+    { id:'rmil', icon:'⚔️', title:'Military Legion', era:'~200 BCE', category:'Government' },
+    { id:'rcoin', icon:'🪙', title:'Coinage System', era:'~150 BCE', category:'Technology' },
+    { id:'rarc', icon:'🏛️', title:'Arch & Vault', era:'~100 BCE', category:'Arts' },
+    { id:'remp', icon:'👑', title:'Roman Empire', era:'~27 BCE', category:'Government' },
+    { id:'rchri', icon:'✝️', title:'Christianity', era:'~100 CE', category:'Arts' },
+    { id:'rforum', icon:'🏟️', title:'Forum Romanum', era:'~200 CE', category:'Arts' }
+  ], decoys:[{ id:'rprint', icon:'🖨️', title:'Printing Press', era:'~1440 CE', category:'Technology', isDecoy:true }] },
+  { round:9, civ:"Ancient China", era:"2000 BCE – 600 CE", correctOrder:['cagri','csilk','cbronze','cwrite','cwall','cpaper'], cards:[
+    { id:'cagri', icon:'🌾', title:'Agriculture', era:'~5000 BCE', category:'Agriculture' },
+    { id:'csilk', icon:'🪡', title:'Silk Production', era:'~2700 BCE', category:'Technology' },
+    { id:'cbronze', icon:'🔶', title:'Bronze Casting', era:'~2000 BCE', category:'Technology' },
+    { id:'cwrite', icon:'📝', title:'Chinese Writing', era:'~1200 BCE', category:'Writing' },
+    { id:'cwall', icon:'🧱', title:'Great Wall', era:'~200 BCE', category:'Infrastructure' },
+    { id:'cpaper', icon:'📄', title:'Paper', era:'~105 CE', category:'Technology' }
+  ], decoys:[] },
+  { round:10, civ:"Ancient China — Dynasty Era", era:"200 BCE – 1300 CE", correctOrder:['ccomp','cexam','cporce','cprint','cgun','cships'], cards:[
+    { id:'ccomp', icon:'🧭', title:'Compass', era:'~200 BCE', category:'Technology' },
+    { id:'cexam', icon:'📋', title:'Civil Service Exam', era:'~605 CE', category:'Government' },
+    { id:'cporce', icon:'🏺', title:'Porcelain', era:'~618 CE', category:'Arts' },
+    { id:'cprint', icon:'🖨️', title:'Printing', era:'~700 CE', category:'Technology' },
+    { id:'cgun', icon:'💥', title:'Gunpowder', era:'~850 CE', category:'Technology' },
+    { id:'cships', icon:'⛵', title:'Treasure Ships', era:'~1405 CE', category:'Technology' }
+  ], decoys:[] }
 ];
 
-// ——— STATE ———
-let state = {
-  round: 0,
-  score: 0,
-  lives: 3,
-  timerSec: 20,
-  timerInterval: null,
-  stackCards: [],        // placed card IDs in order (bottom to top)
-  poolCards: [],         // card objects in pool
-  allCards: [],          // all cards for current round (correct + decoys)
-  correctOrder: [],
-  selectedCard: null,    // {el, cardObj} for keyboard
-  gameRunning: false,
-  muted: false,
-  roundsDone: 0,
-  dragCard: null,
-  dragClone: null,
-  dragOffX: 0,
-  dragOffY: 0,
+// ─── STATE ───
+let S = {
+  round:0, score:0, lives:3, timerSec:20, timerInterval:null,
+  stackCards:[], poolCards:[], allCards:[], correctOrder:[],
+  selectedCard:null, gameRunning:false, muted:false, roundsDone:0,
+  dragCard:null, dragClone:null, dragOffX:0, dragOffY:0
 };
 
-// ——— AUDIO ENGINE ———
-let audioCtx = null;
-let bgmNode = null;
-let bgmGain = null;
-let masterGain = null;
-
-function getAudioCtx() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.8;
-    masterGain.connect(audioCtx.destination);
-  }
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  return audioCtx;
-}
-
-function playTone(freq, type, dur, vol=0.4, delay=0, pan=0) {
-  if (state.muted) return;
-  try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const panner = ctx.createStereoPanner();
-    osc.type = type;
-    osc.frequency.value = freq;
-    panner.pan.value = pan;
-    gain.gain.setValueAtTime(0, ctx.currentTime + delay);
-    gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + delay + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + dur);
-    osc.connect(gain); gain.connect(panner); panner.connect(masterGain);
-    osc.start(ctx.currentTime + delay);
-    osc.stop(ctx.currentTime + delay + dur + 0.01);
-  } catch(e){}
-}
-
-function sfxGrab()    { playTone(200,'sine',0.08,0.25,0,-0.3); playTone(250,'triangle',0.06,0.15,0.03,0.3); }
-function sfxCorrect() {
-  playTone(440,'sine',0.15,0.3); playTone(554,'sine',0.15,0.25,0.06); playTone(659,'sine',0.2,0.3,0.12);
-  playTone(220,'square',0.05,0.1,0,0.5);
-}
-function sfxWrong()   {
-  playTone(180,'sawtooth',0.15,0.3); playTone(150,'square',0.12,0.25,0.05);
-}
-function sfxCollapse(){
-  for(let i=0;i<6;i++) playTone(300-i*30,'sawtooth',0.12,0.25,i*0.06);
-  playTone(80,'square',0.3,0.2,0.3);
-}
-function sfxLifeLost(){
-  playTone(330,'sine',0.3,0.35); playTone(220,'sine',0.4,0.3,0.15); playTone(165,'sine',0.5,0.3,0.35);
-}
-function sfxRoundComplete(){
-  [523,659,784,1047].forEach((f,i)=>playTone(f,'sine',0.25,0.3,i*0.08));
-}
-function sfxGameOver(){
-  [440,392,349,294,247].forEach((f,i)=>playTone(f,'sine',0.35,0.35,i*0.12));
-}
-function sfxVictory(){
-  [523,659,784,1047,1319,1047,784,1047].forEach((f,i)=>{ playTone(f,'sine',0.25,0.35,i*0.1); playTone(f*1.25,'triangle',0.12,0.15,i*0.1+0.04); });
-}
+// ─── AUDIO ───
+let audioCtx=null, masterGain=null, bgmGain=null, bgmNode=null;
+function getAudioCtx(){ if(!audioCtx){ audioCtx=new(window.AudioContext||window.webkitAudioContext)(); masterGain=audioCtx.createGain(); masterGain.gain.value=0.8; masterGain.connect(audioCtx.destination); } if(audioCtx.state==='suspended')audioCtx.resume(); return audioCtx; }
+function playTone(freq,type,dur,vol=0.4,delay=0,pan=0){ if(S.muted)return; try{ const ctx=getAudioCtx(); const o=ctx.createOscillator(); const g=ctx.createGain(); const p=ctx.createStereoPanner(); o.type=type; o.frequency.value=freq; p.pan.value=pan; g.gain.setValueAtTime(0,ctx.currentTime+delay); g.gain.linearRampToValueAtTime(vol,ctx.currentTime+delay+0.01); g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay+dur); o.connect(g); g.connect(p); p.connect(masterGain); o.start(ctx.currentTime+delay); o.stop(ctx.currentTime+delay+dur+0.01); }catch(e){} }
+function sfxGrab(){ playTone(200,'sine',0.08,0.25,0,-0.3); playTone(250,'triangle',0.06,0.15,0.03,0.3); }
+function sfxCorrect(){ playTone(440,'sine',0.15,0.3); playTone(554,'sine',0.15,0.25,0.06); playTone(659,'sine',0.2,0.3,0.12); }
+function sfxWrong(){ playTone(180,'sawtooth',0.15,0.3); playTone(150,'square',0.12,0.25,0.05); }
+function sfxLifeLost(){ playTone(330,'sine',0.3,0.35); playTone(220,'sine',0.4,0.3,0.15); playTone(165,'sine',0.5,0.3,0.35); }
+function sfxRoundComplete(){ [523,659,784,1047].forEach((f,i)=>playTone(f,'sine',0.25,0.3,i*0.08)); }
+function sfxVictory(){ [523,659,784,1047,1319,1047,784,1047].forEach((f,i)=>{ playTone(f,'sine',0.25,0.35,i*0.1); }); }
+function sfxGameOver(){ [440,392,349,294,247].forEach((f,i)=>playTone(f,'sine',0.35,0.35,i*0.12)); }
 function sfxTimerWarn(){ playTone(880,'square',0.06,0.15); }
 
-function startBGM() {
-  if (state.muted || bgmNode) return;
-  try {
-    const ctx = getAudioCtx();
-    bgmGain = ctx.createGain();
-    bgmGain.gain.value = 0.18;
-    bgmGain.connect(masterGain);
+function startBGM(){ if(S.muted||bgmNode)return; try{ const ctx=getAudioCtx(); bgmGain=ctx.createGain(); bgmGain.gain.value=0.18; bgmGain.connect(masterGain); const chords=[[220,261,330],[174,220,261],[196,261,329],[185,246,311],[220,261,330],[164,220,261],[207,261,311],[196,261,330]]; const melody=[659,784,880,784,698,784,659,587,659,587,523,587,659,587,523,494]; const beat=0.625; let t=ctx.currentTime+0.1; const nodes=[]; function schedule(){ chords.forEach((chord,ci)=>{ chord.forEach(f=>{ const o=ctx.createOscillator(); const g=ctx.createGain(); o.type='triangle'; o.frequency.value=f; g.gain.setValueAtTime(0,t+ci*beat*2); g.gain.linearRampToValueAtTime(0.15,t+ci*beat*2+0.05); g.gain.exponentialRampToValueAtTime(0.001,t+(ci+1)*beat*2-0.05); o.connect(g); g.connect(bgmGain); o.start(t+ci*beat*2); o.stop(t+(ci+1)*beat*2); nodes.push(o); }); }); melody.forEach((f,mi)=>{ const o=ctx.createOscillator(); const g=ctx.createGain(); o.type='sine'; o.frequency.value=f; g.gain.setValueAtTime(0,t+mi*beat*0.5); g.gain.linearRampToValueAtTime(0.22,t+mi*beat*0.5+0.02); g.gain.exponentialRampToValueAtTime(0.001,t+mi*beat*0.5+beat*0.45); o.connect(g); g.connect(bgmGain); o.start(t+mi*beat*0.5); o.stop(t+mi*beat*0.5+beat*0.5); nodes.push(o); }); } schedule(); bgmNode={nodes, loopTimeout:setTimeout(function loop(){ if(!S.muted){ t=ctx.currentTime+0.1; schedule(); } bgmNode.loopTimeout=setTimeout(loop,chords.length*beat*2*1000); },chords.length*beat*2*1000)}; }catch(e){} }
+function stopBGM(){ if(bgmNode){ clearTimeout(bgmNode.loopTimeout); bgmNode=null; } if(bgmGain){ bgmGain.gain.setTargetAtTime(0,audioCtx?.currentTime||0,0.1); bgmGain=null; } }
+function toggleMute(){ S.muted=!S.muted; document.getElementById('muteBtn').textContent=S.muted?'🔇':'🔊'; if(S.muted)stopBGM(); else startBGM(); }
 
-    // Chord progression: Am, F, C, G (in A minor / C major)
-    const chords = [
-      [220,261,330], [174,220,261], [196,261,329], [185,246,311],
-      [220,261,330], [164,220,261], [207,261,311], [196,261,330]
-    ];
-    const melody = [659,784,880,784,698,784,659,587,659,587,523,587,659,587,523,494];
-    const bpm = 96;
-    const beat = 60/bpm;
+// ─── UI HELPERS ───
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+let toastTimer=null;
+function showToast(msg,dur=1600){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),dur); }
 
-    let t = ctx.currentTime + 0.1;
-    const nodes = [];
+// ─── GAME ───
+function startGame(){ S.round=0; S.score=0; S.lives=3; S.roundsDone=0; S.gameRunning=true; updateScore(); updateLives(); showScreen('gameScreen'); startBGM(); loadRound(); }
 
-    function scheduleLoop() {
-      chords.forEach((chord, ci) => {
-        chord.forEach(f => {
-          const o = ctx.createOscillator(); const g = ctx.createGain();
-          o.type = 'triangle'; o.frequency.value = f;
-          g.gain.setValueAtTime(0, t + ci*beat*2);
-          g.gain.linearRampToValueAtTime(0.15, t + ci*beat*2 + 0.05);
-          g.gain.exponentialRampToValueAtTime(0.001, t + (ci+1)*beat*2 - 0.05);
-          o.connect(g); g.connect(bgmGain);
-          o.start(t + ci*beat*2); o.stop(t + (ci+1)*beat*2);
-          nodes.push(o);
-        });
-      });
-
-      melody.forEach((f, mi) => {
-        const o = ctx.createOscillator(); const g = ctx.createGain();
-        o.type = 'sine'; o.frequency.value = f;
-        g.gain.setValueAtTime(0, t + mi*beat*0.5);
-        g.gain.linearRampToValueAtTime(0.22, t + mi*beat*0.5 + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.001, t + mi*beat*0.5 + beat*0.45);
-        o.connect(g); g.connect(bgmGain);
-        o.start(t + mi*beat*0.5); o.stop(t + mi*beat*0.5 + beat*0.5);
-        nodes.push(o);
-      });
-    }
-    scheduleLoop();
-    bgmNode = { nodes, loopTimeout: setTimeout(function loop(){
-      if (!state.muted) {
-        t = ctx.currentTime + 0.1;
-        scheduleLoop();
-      }
-      bgmNode.loopTimeout = setTimeout(loop, chords.length*beat*2*1000);
-    }, chords.length*beat*2*1000) };
-  } catch(e){}
+function loadRound(){
+  if(S.round>=ROUNDS.length){ endGame(true); return; }
+  clearInterval(S.timerInterval);
+  const rd=ROUNDS[S.round];
+  S.correctOrder=rd.correctOrder;
+  S.stackCards=[];
+  S.selectedCard=null;
+  const all=[...rd.cards,...rd.decoys];
+  shuffleArr(all);
+  S.allCards=all;
+  S.poolCards=all.filter(c=>true);
+  document.getElementById('civName').textContent=`${rd.civ} — Build Your Civilization!`;
+  document.getElementById('roundLabel').textContent=`Round ${rd.round} / 10`;
+  renderPool(); renderStack(); updateProgress(); updateOrderGuide();
+  S.timerSec=20; updateTimerDisplay(20);
+  S.timerInterval=setInterval(timerTick,1000);
+  if(S.round>0)showToast(`🏛️ ${rd.civ}`,1400);
 }
 
-function stopBGM() {
-  if (bgmNode) {
-    clearTimeout(bgmNode.loopTimeout);
-    bgmNode = null;
-  }
-  if (bgmGain) { bgmGain.gain.setTargetAtTime(0, audioCtx?.currentTime||0, 0.1); bgmGain = null; }
-}
+function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
 
-function toggleMute() {
-  state.muted = !state.muted;
-  document.getElementById('muteBtn').textContent = state.muted ? '🔇' : '🔊';
-  if (state.muted) stopBGM();
-  else startBGM();
-}
+function timerTick(){ if(!S.gameRunning)return; S.timerSec--; updateTimerDisplay(S.timerSec); if(S.timerSec<=5&&S.timerSec>0)sfxTimerWarn(); if(S.timerSec<=0){ clearInterval(S.timerInterval); handleTimerExpire(); } }
+function updateTimerDisplay(sec){ document.getElementById('timerNum').textContent=sec; const pct=sec/20; const circ=document.getElementById('timerCircle'); circ.style.strokeDashoffset=113*(1-pct); circ.classList.toggle('urgent',sec<=5); }
+function handleTimerExpire(){ showToast('⏰ Time\'s Up!',1500); setTimeout(()=>{ S.round++; loadRound(); },1500); }
 
-// ——— SCREEN MANAGEMENT ———
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s=>{ s.classList.remove('active'); });
-  document.getElementById(id).classList.add('active');
-}
-function showInstructions() { showScreen('instructScreen'); }
+function updateScore(){ document.getElementById('scoreDisplay').textContent=S.score; }
+function updateLives(){ document.querySelectorAll('.life-icon').forEach((el,i)=>{ el.classList.toggle('lost',i>=S.lives); }); }
+function loseLife(){ S.lives--; sfxLifeLost(); updateLives(); if(S.lives<=0){ clearInterval(S.timerInterval); setTimeout(()=>endGame(false),700); } }
 
-// ——— TOAST ———
-let toastTimer = null;
-function showToast(msg, duration=1800) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>el.classList.remove('show'), duration);
-}
-
-// ——— GAME INIT ———
-function startGame() {
-  state.round = 0;
-  state.score = 0;
-  state.lives = 3;
-  state.roundsDone = 0;
-  state.gameRunning = true;
-  updateScore();
-  updateLives();
-  showScreen('gameScreen');
-  startBGM();
-  loadRound();
-}
-
-function loadRound() {
-  if (state.round >= ROUNDS.length) { endGame(true); return; }
-  clearInterval(state.timerInterval);
-
-  const rd = ROUNDS[state.round];
-  state.correctOrder = rd.correctOrder;
-  state.stackCards = [];
-  state.selectedCard = null;
-
-  // Shuffle pool: correct cards + decoys
-  const allPool = [...rd.cards, ...rd.decoys];
-  shuffleArr(allPool);
-  state.allCards = allPool;
-  state.poolCards = allPool.filter(c=>!c.isDecoy || true); // include decoys
-
-  // Update HUD
-  document.getElementById('civName').textContent = `${rd.civ} — Build Your Civilization!`;
-  document.getElementById('roundLabel').textContent = `Round ${rd.round} / 10`;
-
-  renderPool();
-  renderStack();
-  updateProgress();
-  updateOrderGuide();
-
-  state.timerSec = 20;
-  updateTimerDisplay(20);
-  state.timerInterval = setInterval(timerTick, 1000);
-
-  // Smooth round transition notification
-  if (state.round > 0) {
-    showToast(`🏛️ ${rd.civ}`, 1600);
-  }
-}
-
-function shuffleArr(arr) {
-  for(let i=arr.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [arr[i],arr[j]]=[arr[j],arr[i]];
-  }
-}
-
-// ——— TIMER ———
-function timerTick() {
-  if (!state.gameRunning) return;
-  state.timerSec--;
-  updateTimerDisplay(state.timerSec);
-  if (state.timerSec <= 5 && state.timerSec > 0) sfxTimerWarn();
-  if (state.timerSec <= 0) {
-    clearInterval(state.timerInterval);
-    handleTimerExpire();
-  }
-}
-function updateTimerDisplay(sec) {
-  document.getElementById('timerNum').textContent = sec;
-  const pct = sec / 20;
-  const circumference = 2 * Math.PI * 18; // ~113
-  const offset = circumference * (1 - pct);
-  const circ = document.getElementById('timerCircle');
-  circ.style.strokeDashoffset = offset;
-  circ.classList.toggle('urgent', sec <= 5);
-}
-function handleTimerExpire() {
-  showToast('⏰ Time\'s Up! No points this round.', 2000);
-  setTimeout(()=>{ state.round++; loadRound(); }, 1800);
-}
-
-// ——— SCORE / LIVES ———
-function updateScore() {
-  document.getElementById('scoreDisplay').textContent = state.score;
-}
-function updateLives() {
-  const icons = document.querySelectorAll('.life-icon');
-  icons.forEach((el,i)=>{ el.classList.toggle('lost', i >= state.lives); });
-}
-function loseLife() {
-  state.lives--;
-  sfxLifeLost();
-  updateLives();
-  if (state.lives <= 0) {
-    clearInterval(state.timerInterval);
-    setTimeout(()=>endGame(false), 800);
-  }
-}
-
-// ——— RENDER POOL ———
-function renderPool() {
-  const pool = document.getElementById('cardPool');
-  pool.innerHTML = '<div class="pool-label">Available Cards</div>';
-  state.poolCards.forEach((card, i) => {
-    if (state.stackCards.includes(card.id)) return;
-    const el = createCardEl(card, i+1);
-    attachDragEvents(el, card);
+function renderPool(){
+  const pool=document.getElementById('cardPool');
+  pool.innerHTML='<div class="pool-label">Available Cards</div>';
+  S.poolCards.forEach((card,i)=>{
+    if(S.stackCards.includes(card.id))return;
+    const el=createCardEl(card,i+1);
+    attachDragEvents(el,card);
     pool.appendChild(el);
   });
 }
 
-function createCardEl(card, num) {
-  const el = document.createElement('div');
-  el.className = 'card' + (card.isDecoy ? ' decoy' : '');
-  el.dataset.id = card.id;
+function createCardEl(card,num){
+  const el=document.createElement('div');
+  el.className='card'+(card.isDecoy?' decoy':'');
+  el.dataset.id=card.id;
   el.setAttribute('tabindex','0');
-  el.innerHTML = `
-    <div class="card-inner">
-      <div class="card-num-badge">${num}</div>
-      <div class="card-icon">${card.icon}</div>
-      <div class="card-title">${card.title}</div>
-      <div class="card-era">${card.era || ''}</div>
-    </div>`;
+  el.innerHTML=`<div class="card-inner"><div class="card-num-badge">${num}</div><div class="card-icon">${card.icon}</div><div class="card-title">${card.title}</div><div class="card-era">${card.era||''}</div></div>`;
   return el;
 }
 
-// ——— RENDER STACK ———
-function renderStack() {
-  const zone = document.getElementById('stackZone');
-  zone.innerHTML = '';
-  const totalSlots = state.correctOrder.length;
-
-  // Build from bottom to top (index 0 = bottom = slot 1)
-  for (let i = 0; i < totalSlots; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'stack-slot';
-    slot.dataset.slot = i;
-
-    const cardId = state.stackCards[i];
-    if (cardId) {
-      const cardObj = state.allCards.find(c=>c.id===cardId);
-      if (cardObj) {
-        const cardEl = createCardEl(cardObj, '');
-        cardEl.querySelector('.card-num-badge').style.display = 'none';
-        cardEl.classList.add('locked');
-        cardEl.style.margin = 'auto';
-        // double-tap to remove
+function renderStack(){
+  const zone=document.getElementById('stackZone');
+  zone.innerHTML='';
+  const total=S.correctOrder.length;
+  for(let i=0;i<total;i++){
+    const slot=document.createElement('div');
+    slot.className='stack-slot';
+    slot.dataset.slot=i;
+    const cardId=S.stackCards[i];
+    if(cardId){
+      const cardObj=S.allCards.find(c=>c.id===cardId);
+      if(cardObj){
+        const el=createCardEl(cardObj,'');
+        el.querySelector('.card-num-badge').style.display='none';
+        el.classList.add('locked');
+        el.style.margin='auto';
         let tapCount=0, tapTimer=null;
-        cardEl.addEventListener('click', ()=>{
-          tapCount++;
-          if(tapCount===1){
-            tapTimer=setTimeout(()=>{ tapCount=0; }, 350);
-          } else {
-            clearTimeout(tapTimer); tapCount=0;
-            removeLastCard();
-          }
-        });
+        el.addEventListener('click',()=>{ tapCount++; if(tapCount===1){ tapTimer=setTimeout(()=>{ tapCount=0; },350); } else { clearTimeout(tapTimer); tapCount=0; removeLastCard(); } });
         slot.classList.add('filled');
-        slot.appendChild(cardEl);
+        slot.appendChild(el);
       }
     } else {
-      const posNum = i + 1;
-      const ordLabel = ['1st','2nd','3rd','4th','5th','6th'][i];
-      slot.innerHTML = `<span style="font-size:10px;color:rgba(201,146,42,0.3)">${ordLabel} placement</span>`;
-      // drag-over listeners
-      slot.addEventListener('dragover', e=>{ e.preventDefault(); slot.classList.add('drag-over'); });
-      slot.addEventListener('dragleave', ()=>slot.classList.remove('drag-over'));
-      slot.addEventListener('drop', e=>{ e.preventDefault(); slot.classList.remove('drag-over'); handleDrop(parseInt(slot.dataset.slot)); });
+      const ordLabel=['1st','2nd','3rd','4th','5th','6th'][i]||`${i+1}th`;
+      slot.innerHTML=`<span style="font-size:10px;color:rgba(201,146,42,0.3)">${ordLabel}</span>`;
+      slot.addEventListener('dragover',e=>{ e.preventDefault(); slot.classList.add('drag-over'); });
+      slot.addEventListener('dragleave',()=>slot.classList.remove('drag-over'));
+      slot.addEventListener('drop',e=>{ e.preventDefault(); slot.classList.remove('drag-over'); handleDrop(parseInt(slot.dataset.slot)); });
     }
     zone.appendChild(slot);
   }
-  // Since column-reverse, the first child appears at bottom
 }
 
-// ——— DRAG & DROP (Mouse) ———
-function attachDragEvents(el, card) {
-  // Mouse
-  el.addEventListener('mousedown', e=>{ e.preventDefault(); startDrag(e.clientX, e.clientY, el, card); });
-  // Touch
-  el.addEventListener('touchstart', e=>{ e.preventDefault(); const t=e.touches[0]; startDrag(t.clientX, t.clientY, el, card); }, {passive:false});
-  // Keyboard select
-  el.addEventListener('click', ()=>{ selectCard(el, card); });
+function attachDragEvents(el,card){
+  el.addEventListener('mousedown',e=>{ e.preventDefault(); startDrag(e.clientX,e.clientY,el,card); });
+  el.addEventListener('touchstart',e=>{ e.preventDefault(); const t=e.touches[0]; startDrag(t.clientX,t.clientY,el,card); },{passive:false});
+  el.addEventListener('click',()=>{ selectCard(el,card); });
 }
 
-function startDrag(cx, cy, el, card) {
-  if (state.stackCards.includes(card.id)) return;
+function startDrag(cx,cy,el,card){
+  if(S.stackCards.includes(card.id))return;
   sfxGrab();
-  selectCard(el, card);
-
-  const rect = el.getBoundingClientRect();
-  state.dragCard = card;
-  state.dragOffX = cx - rect.left;
-  state.dragOffY = cy - rect.top;
-
-  const clone = el.cloneNode(true);
-  clone.style.position = 'fixed';
-  clone.style.width = rect.width + 'px';
-  clone.style.height = rect.height + 'px';
-  clone.style.left = (cx - state.dragOffX) + 'px';
-  clone.style.top  = (cy - state.dragOffY) + 'px';
-  clone.style.zIndex = 9999;
-  clone.style.pointerEvents = 'none';
-  clone.classList.add('dragging');
+  selectCard(el,card);
+  const rect=el.getBoundingClientRect();
+  S.dragCard=card;
+  S.dragOffX=cx-rect.left;
+  S.dragOffY=cy-rect.top;
+  const clone=el.cloneNode(true);
+  clone.style.position='fixed'; clone.style.width=rect.width+'px'; clone.style.height=rect.height+'px';
+  clone.style.left=(cx-S.dragOffX)+'px'; clone.style.top=(cy-S.dragOffY)+'px';
+  clone.style.zIndex=9999; clone.style.pointerEvents='none'; clone.classList.add('dragging');
   document.body.appendChild(clone);
-  state.dragClone = clone;
-
-  const onMove = (mx, my) => {
-    clone.style.left = (mx - state.dragOffX) + 'px';
-    clone.style.top  = (my - state.dragOffY) + 'px';
-    highlightDropZone(mx, my);
-  };
-  const onEnd = (mx, my) => {
-    cleanup();
-    const slot = findSlotAt(mx, my);
-    if (slot !== null) handleDrop(slot);
-    else unhighlightAll();
-  };
-
-  const mmv = e=>onMove(e.clientX, e.clientY);
-  const mup = e=>onEnd(e.clientX, e.clientY);
-  const tmv = e=>{ const t=e.touches[0]; onMove(t.clientX,t.clientY); };
-  const tup = e=>{ const t=e.changedTouches[0]; onEnd(t.clientX,t.clientY); };
-
-  function cleanup() {
-    if (clone.parentNode) clone.parentNode.removeChild(clone);
-    state.dragClone = null;
-    document.removeEventListener('mousemove', mmv);
-    document.removeEventListener('mouseup', mup);
-    document.removeEventListener('touchmove', tmv);
-    document.removeEventListener('touchend', tup);
-    unhighlightAll();
-  }
-  document.addEventListener('mousemove', mmv);
-  document.addEventListener('mouseup', mup);
-  document.addEventListener('touchmove', tmv, {passive:true});
-  document.addEventListener('touchend', tup);
+  S.dragClone=clone;
+  const onMove=(mx,my)=>{ clone.style.left=(mx-S.dragOffX)+'px'; clone.style.top=(my-S.dragOffY)+'px'; highlightDropZone(mx,my); };
+  const onEnd=(mx,my)=>{ cleanup(); const slot=findSlotAt(mx,my); if(slot!==null)handleDrop(slot); else unhighlightAll(); };
+  const mmv=e=>onMove(e.clientX,e.clientY);
+  const mup=e=>onEnd(e.clientX,e.clientY);
+  const tmv=e=>{ const t=e.touches[0]; onMove(t.clientX,t.clientY); };
+  const tup=e=>{ const t=e.changedTouches[0]; onEnd(t.clientX,t.clientY); };
+  function cleanup(){ if(clone.parentNode)clone.parentNode.removeChild(clone); S.dragClone=null; document.removeEventListener('mousemove',mmv); document.removeEventListener('mouseup',mup); document.removeEventListener('touchmove',tmv); document.removeEventListener('touchend',tup); unhighlightAll(); }
+  document.addEventListener('mousemove',mmv); document.addEventListener('mouseup',mup); document.addEventListener('touchmove',tmv,{passive:true}); document.addEventListener('touchend',tup);
 }
 
-function highlightDropZone(cx, cy) {
-  document.querySelectorAll('.stack-slot').forEach(slot=>{
-    const r = slot.getBoundingClientRect();
-    if(cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom) slot.classList.add('drag-over');
-    else slot.classList.remove('drag-over');
-  });
-}
-function unhighlightAll() { document.querySelectorAll('.stack-slot').forEach(s=>s.classList.remove('drag-over')); }
+function highlightDropZone(cx,cy){ document.querySelectorAll('.stack-slot').forEach(slot=>{ const r=slot.getBoundingClientRect(); if(cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom)slot.classList.add('drag-over'); else slot.classList.remove('drag-over'); }); }
+function unhighlightAll(){ document.querySelectorAll('.stack-slot').forEach(s=>s.classList.remove('drag-over')); }
+function findSlotAt(cx,cy){ let found=null; document.querySelectorAll('.stack-slot').forEach(slot=>{ const r=slot.getBoundingClientRect(); if(cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom)found=parseInt(slot.dataset.slot); }); return found; }
 
-function findSlotAt(cx, cy) {
-  let found = null;
-  document.querySelectorAll('.stack-slot').forEach(slot=>{
-    const r = slot.getBoundingClientRect();
-    if(cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom) found=parseInt(slot.dataset.slot);
-  });
-  return found;
-}
-
-// ——— DROP HANDLER ———
-function handleDrop(slotIndex) {
-  if (!state.dragCard && !state.selectedCard) return;
-  const card = state.dragCard || state.selectedCard.cardObj;
-
-  // Can only place in next available slot (sequential)
-  const nextSlot = state.stackCards.length;
-  if (slotIndex !== nextSlot) {
-    showToast('⚠️ Fill from the bottom first!', 1200);
-    sfxWrong();
-    return;
-  }
-  if (state.stackCards.includes(card.id)) return;
-
-  // Check if this card is a decoy
-  if (card.isDecoy) {
-    rejectCard(card);
-    return;
-  }
-
-  // Check if placement is correct
-  const expectedId = state.correctOrder[nextSlot];
-  if (card.id === expectedId) {
-    // Correct!
-    state.stackCards.push(card.id);
-    const pts = 100 + Math.round(state.timerSec * 5);
-    state.score += pts;
-    updateScore();
-    sfxCorrect();
-
-    renderPool();
-    renderStack();
-    updateProgress();
-    updateOrderGuide();
-
-    // Animate the placed card
-    setTimeout(()=>{
-      const placed = document.querySelector(`.stack-slot[data-slot="${slotIndex}"] .card`);
-      if (placed) placed.classList.add('placed');
-    }, 10);
-
-    if (state.stackCards.length >= state.correctOrder.length) {
-      roundComplete();
-    }
-  } else {
-    rejectCard(card);
-  }
-  state.dragCard = null;
-  state.selectedCard = null;
+function handleDrop(slotIndex){
+  if(!S.dragCard&&!S.selectedCard)return;
+  const card=S.dragCard||S.selectedCard.cardObj;
+  const nextSlot=S.stackCards.length;
+  if(slotIndex!==nextSlot){ showToast('⚠️ Fill from bottom!',1000); sfxWrong(); return; }
+  if(S.stackCards.includes(card.id))return;
+  if(card.isDecoy){ rejectCard(card); return; }
+  const expectedId=S.correctOrder[nextSlot];
+  if(card.id===expectedId){
+    S.stackCards.push(card.id);
+    const pts=100+Math.round(S.timerSec*5);
+    S.score+=pts; updateScore(); sfxCorrect();
+    renderPool(); renderStack(); updateProgress(); updateOrderGuide();
+    setTimeout(()=>{ const placed=document.querySelector(`.stack-slot[data-slot="${slotIndex}"] .card`); if(placed)placed.classList.add('placed'); },10);
+    if(S.stackCards.length>=S.correctOrder.length){ roundComplete(); }
+  } else { rejectCard(card); }
+  S.dragCard=null; S.selectedCard=null;
 }
 
-function rejectCard(card) {
+function rejectCard(card){
   sfxWrong();
-  const zone = document.getElementById('stackZone');
+  const zone=document.getElementById('stackZone');
   zone.classList.add('stack-shake');
-  setTimeout(()=>zone.classList.remove('stack-shake'), 600);
-
-  // Flash wrong card
-  const cardEl = document.querySelector(`[data-id="${card.id}"]`);
-  if(cardEl){ cardEl.classList.add('wrong-bounce'); setTimeout(()=>cardEl.classList.remove('wrong-bounce'),600); }
-
-  showToast(card.isDecoy ? `❌ ${card.title} doesn't belong here!` : `❌ Not the right order — try again!`, 1600);
-
-  // Lose a life
+  setTimeout(()=>zone.classList.remove('stack-shake'),600);
+  const el=document.querySelector(`[data-id="${card.id}"]`);
+  if(el){ el.classList.add('wrong-bounce'); setTimeout(()=>el.classList.remove('wrong-bounce'),600); }
+  showToast(card.isDecoy?`❌ ${card.title} doesn't belong!`:'❌ Wrong order!',1400);
   loseLife();
 }
 
-function roundComplete() {
-  clearInterval(state.timerInterval);
-  state.roundsDone++;
+function roundComplete(){
+  clearInterval(S.timerInterval);
+  S.roundsDone++;
   sfxRoundComplete();
-
-  // Bonus for speed
-  const bonus = Math.round(state.timerSec * 10);
-  state.score += bonus;
-  updateScore();
-
-  // Glow effect on stack zone
-  const zone = document.getElementById('stackZone');
+  const bonus=Math.round(S.timerSec*10);
+  S.score+=bonus; updateScore();
+  const zone=document.getElementById('stackZone');
   zone.classList.add('level-glow');
-  setTimeout(()=>zone.classList.remove('level-glow'), 1000);
-
-  showToast(`✨ +${bonus} Speed Bonus!`, 1400);
-
-  setTimeout(()=>{
-    state.round++;
-    if(state.round >= ROUNDS.length){ endGame(true); return; }
-    loadRound();
-  }, 1600);
+  setTimeout(()=>zone.classList.remove('level-glow'),1000);
+  showToast(`✨ +${bonus} Speed Bonus!`,1200);
+  setTimeout(()=>{ S.round++; if(S.round>=ROUNDS.length){ endGame(true); return; } loadRound(); },1500);
 }
 
-// ——— REMOVE LAST CARD ———
-function removeLastCard() {
-  if (state.stackCards.length === 0) return;
-  state.stackCards.pop();
-  renderPool();
-  renderStack();
-  updateProgress();
-  updateOrderGuide();
-  showToast('↩️ Card removed', 800);
-}
+function removeLastCard(){ if(S.stackCards.length===0)return; S.stackCards.pop(); renderPool(); renderStack(); updateProgress(); updateOrderGuide(); showToast('↩️ Removed',700); }
+function resetRound(){ S.stackCards=[]; clearInterval(S.timerInterval); S.timerSec=20; updateTimerDisplay(20); renderPool(); renderStack(); updateProgress(); updateOrderGuide(); S.timerInterval=setInterval(timerTick,1000); showToast('🔄 Reset',900); }
 
-// ——— KEYBOARD SELECTION ———
-function selectCard(el, card) {
-  // Deselect previous
-  if (state.selectedCard) state.selectedCard.el.classList.remove('selected');
-  state.selectedCard = { el, cardObj: card };
-  el.classList.add('selected');
-}
+function selectCard(el,card){ if(S.selectedCard)S.selectedCard.el.classList.remove('selected'); S.selectedCard={el,cardObj:card}; el.classList.add('selected'); }
 
-document.addEventListener('keydown', e=>{
-  if (!state.gameRunning) return;
-  if (showingScreen() !== 'gameScreen') return;
-
-  if (e.key === 'm' || e.key === 'M') { toggleMute(); return; }
-  if (e.key === 'r' || e.key === 'R') { resetRound(); return; }
-
-  // Number keys 1-6 to select card
-  const num = parseInt(e.key);
-  if (num >= 1 && num <= 6) {
-    const cards = document.querySelectorAll('#cardPool .card');
-    if (cards[num-1]) {
-      const id = cards[num-1].dataset.id;
-      const cardObj = state.allCards.find(c=>c.id===id);
-      if(cardObj) selectCard(cards[num-1], cardObj);
-    }
+document.addEventListener('keydown',e=>{
+  if(!S.gameRunning||showingScreen()!=='gameScreen')return;
+  if(e.key==='m'||e.key==='M'){ toggleMute(); return; }
+  if(e.key==='r'||e.key==='R'){ resetRound(); return; }
+  const num=parseInt(e.key);
+  if(num>=1&&num<=6){
+    const cards=document.querySelectorAll('#cardPool .card');
+    if(cards[num-1]){ const id=cards[num-1].dataset.id; const obj=S.allCards.find(c=>c.id===id); if(obj)selectCard(cards[num-1],obj); }
     return;
   }
-
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    if (state.selectedCard) {
-      state.dragCard = state.selectedCard.cardObj;
-      handleDrop(state.stackCards.length);
-      state.dragCard = null;
-    }
-    return;
-  }
-  if (e.key === 'Backspace') {
-    e.preventDefault();
-    removeLastCard();
-    return;
-  }
+  if(e.key==='Enter'){ e.preventDefault(); if(S.selectedCard){ S.dragCard=S.selectedCard.cardObj; handleDrop(S.stackCards.length); S.dragCard=null; } return; }
+  if(e.key==='Backspace'){ e.preventDefault(); removeLastCard(); return; }
 });
 
-function showingScreen() {
-  const active = document.querySelector('.screen.active');
-  return active ? active.id : null;
+function showingScreen(){ const active=document.querySelector('.screen.active'); return active?active.id:null; }
+
+function updateProgress(){
+  const placed=S.stackCards.length, total=S.correctOrder.length;
+  document.getElementById('progressFill').style.width=(placed/total*100)+'%';
+  document.getElementById('progressLabel').textContent=`Placed ${placed} / ${total} cards`;
 }
 
-function resetRound() {
-  state.stackCards = [];
-  clearInterval(state.timerInterval);
-  state.timerSec = 20;
-  updateTimerDisplay(20);
-  renderPool();
-  renderStack();
-  updateProgress();
-  updateOrderGuide();
-  state.timerInterval = setInterval(timerTick, 1000);
-  showToast('🔄 Round reset', 1000);
-}
-
-// ——— PROGRESS ———
-function updateProgress() {
-  const placed = state.stackCards.length;
-  const total = state.correctOrder.length;
-  const pct = (placed / total) * 100;
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressLabel').textContent = `Placed ${placed} / ${total} cards`;
-}
-
-// ——— ORDER GUIDE (right panel) ———
-function updateOrderGuide() {
-  const guide = document.getElementById('orderGuide');
-  guide.innerHTML = '';
-  for(let i=0;i<state.correctOrder.length;i++){
-    const div = document.createElement('div');
-    div.className = 'order-pos';
-    const numEl = document.createElement('div');
-    numEl.className = 'order-num' + (i < state.stackCards.length ? ' filled-ord' : '');
-    numEl.textContent = i+1;
-    const cardLabel = document.createElement('div');
-    cardLabel.className = 'order-card-mini';
-    if(i < state.stackCards.length){
-      const c = state.allCards.find(c=>c.id===state.stackCards[i]);
-      cardLabel.textContent = c ? c.title : '?';
-      cardLabel.style.color = 'var(--leaf)';
-    } else {
-      cardLabel.textContent = '???';
-    }
-    div.appendChild(numEl);
-    div.appendChild(cardLabel);
-    guide.appendChild(div);
+function updateOrderGuide(){
+  const guide=document.getElementById('orderGuide');
+  guide.innerHTML='';
+  for(let i=0;i<S.correctOrder.length;i++){
+    const div=document.createElement('div'); div.className='order-pos';
+    const numEl=document.createElement('div'); numEl.className='order-num'+(i<S.stackCards.length?' filled-ord':''); numEl.textContent=i+1;
+    const label=document.createElement('div'); label.className='order-card-mini';
+    if(i<S.stackCards.length){ const c=S.allCards.find(c=>c.id===S.stackCards[i]); label.textContent=c?c.title:'?'; label.style.color='var(--leaf)'; } else { label.textContent='???'; }
+    div.appendChild(numEl); div.appendChild(label); guide.appendChild(div);
   }
 }
 
-// ——— END GAME ———
-function endGame(victory) {
-  clearInterval(state.timerInterval);
-  state.gameRunning = false;
-  stopBGM();
-
-  setTimeout(()=>{
-    if(victory){ sfxVictory(); } else { sfxGameOver(); }
-  }, 200);
-
-  document.getElementById('endScore').textContent  = state.score;
-  document.getElementById('endRounds').textContent = state.roundsDone;
-  document.getElementById('endLives').textContent  = state.lives;
-  document.getElementById('endIcon').textContent   = victory ? '🏆' : '💔';
-  document.getElementById('endTitle').textContent  = victory ? 'Civilization Complete!' : 'Civilization Fell';
-  document.getElementById('endSubtitle').textContent = victory
-    ? 'You\'ve built 10 civilizations — a true historian!'
-    : state.lives <= 0
-      ? 'Your civilization crumbled... but history remembers.'
-      : 'Time ran out — the sands of time wait for no one.';
-
+function endGame(victory){
+  clearInterval(S.timerInterval); S.gameRunning=false; stopBGM();
+  setTimeout(()=>{ if(victory)sfxVictory(); else sfxGameOver(); },200);
+  const stars = S.score>=2000 ? '⭐⭐⭐' : S.score>=1000 ? '⭐⭐' : '⭐';
+  document.getElementById('starRating').textContent=stars;
+  document.getElementById('endScore').textContent=S.score;
+  document.getElementById('endRounds').textContent=S.roundsDone;
+  document.getElementById('endLives').textContent=S.lives;
+  document.getElementById('endIcon').textContent=victory?'🏆':'💔';
+  document.getElementById('endTitle').textContent=victory?'Civilization Complete!':'Civilization Fell';
+  document.getElementById('endSubtitle').textContent=victory?'You built 10 civilizations — a true historian!':S.lives<=0?'Your civilization crumbled... but history remembers.':'Time ran out — the sands of time wait for no one.';
   showScreen('endScreen');
 }
+
+// ─── INSTRUCTION TABS ───
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ─── PREVENT DEFAULT TOUCH DRAG ───
+document.addEventListener('touchmove', e=>{ if(e.target.closest('.card-pool')||e.target.closest('.stack-drop-zone'))e.preventDefault(); }, {passive:false});
 </script>
 </body>
 </html>
